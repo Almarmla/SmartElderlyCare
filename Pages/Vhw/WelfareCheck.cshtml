@@ -1,0 +1,64 @@
+@page
+@model SmartElderlyCare.Pages.Vhw.WelfareCheckModel
+@{
+    ViewData["Title"] = "VHW Welfare Check";
+}
+
+<div class="container py-4 vhw-form-page">
+    <div class="text-center mb-4">
+        <span class="eyebrow">Village Health Worker</span>
+        <h1 class="mt-3">Welfare check</h1>
+        <p class="text-muted fs-5">Choose the answers that best describe the patient today.</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success text-center fs-5" role="alert">@successMessage</div>
+    }
+
+    <form method="post" class="vhw-form">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.PatientId"></label>
+            <select asp-for="Input.PatientId" asp-items="Model.Patients" class="form-select form-select-lg">
+                <option value="">Choose a patient</option>
+            </select>
+            <span asp-validation-for="Input.PatientId" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.Mobility"></label>
+            <select asp-for="Input.Mobility" class="form-select form-select-lg">
+                <option value="">Choose mobility</option>
+                <option value="Independent">Walks independently</option>
+                <option value="NeedsSupport">Needs some support</option>
+                <option value="Unable">Unable to walk</option>
+            </select>
+            <span asp-validation-for="Input.Mobility" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-check-row">
+            <input asp-for="Input.MedicationTaken" class="form-check-input" />
+            <label asp-for="Input.MedicationTaken" class="form-check-label">Medication was taken today</label>
+        </div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.GeneralCondition"></label>
+            <select asp-for="Input.GeneralCondition" asp-items="Html.GetEnumSelectList<VhwWelfareStatus>()" class="form-select form-select-lg"></select>
+            <span asp-validation-for="Input.GeneralCondition" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.Notes"></label>
+            <textarea asp-for="Input.Notes" class="form-control form-control-lg" rows="4" placeholder="Write anything important..."></textarea>
+            <span asp-validation-for="Input.Notes" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn primary-button btn-lg w-100 vhw-save-button">Save welfare check</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

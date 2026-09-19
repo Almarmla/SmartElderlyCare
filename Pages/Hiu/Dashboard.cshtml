@@ -1,0 +1,112 @@
+@page
+@model SmartElderlyCare.Pages.Hiu.DashboardModel
+@{
+    ViewData["Title"] = "HIU Dashboard";
+}
+
+<form method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="container-fluid py-4 hiu-dashboard">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <span class="eyebrow">HIU Data Clerk</span>
+            <h1 class="mt-3 mb-1">Monitoring dashboard</h1>
+            <p class="text-muted mb-0">Review recent readings and follow up on the most serious alerts first.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-success" asp-page="/Hiu/MonthlyReport">Monthly DHIS2 report</a>
+            <a class="btn btn-outline-success" asp-page="/Hiu/Dashboard">Refresh dashboard</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-7">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Active alerts</h2>
+                            <p class="text-muted small mb-0">Sorted from critical to low severity</p>
+                        </div>
+                        <span class="badge text-bg-danger">@Model.ActiveAlerts.Count open</span>
+                    </div>
+
+                    @if (Model.ActiveAlerts.Count == 0)
+                    {
+                        <div class="alert alert-success mb-0">No active alerts need review.</div>
+                    }
+                    else
+                    {
+                        <div class="hiu-alert-list">
+                            @foreach (var alert in Model.ActiveAlerts)
+                            {
+                                <article class="hiu-alert-item" id="alert-@alert.Id">
+                                    <span class="badge severity-@alert.Severity.ToString().ToLowerInvariant()">@alert.Severity</span>
+                                    <div class="flex-grow-1">
+                                        <strong>@alert.Message</strong>
+                                        <small class="d-block text-muted">@alert.Patient.FirstName @alert.Patient.LastName · @alert.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</small>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-success review-alert-button" data-alert-id="@alert.Id">Mark reviewed</button>
+                                </article>
+                            }
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <div class="col-xl-5">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-1">Recent readings</h2>
+                    <p class="text-muted small mb-3">Latest facility nurse submissions</p>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr><th>Patient</th><th>Reading</th><th>Recorded</th></tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var reading in Model.RecentReadings)
+                            {
+                                <tr>
+                                    <td><strong>@reading.Patient.FirstName @reading.Patient.LastName</strong></td>
+                                    <td>
+                                        <span class="d-block">@reading.SystolicBloodPressure/@reading.DiastolicBloodPressure mmHg</span>
+                                        <small class="text-muted">@reading.PulseRate bpm · @reading.TemperatureCelsius °C</small>
+                                    </td>
+                                    <td class="text-muted small">@reading.RecordedAt.ToLocalTime().ToString("dd MMM HH:mm")</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".review-alert-button").forEach(function (button) {
+            button.addEventListener("click", async function () {
+                button.disabled = true;
+                const response = await fetch("?handler=MarkReviewed&alertId=" + encodeURIComponent(button.dataset.alertId), {
+                    method: "POST",
+                    headers: {
+                        "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ""
+                    }
+                });
+
+                if (!response.ok) {
+                    button.disabled = false;
+                    return;
+                }
+
+                document.getElementById("alert-" + button.dataset.alertId)?.remove();
+            });
+        });
+    </script>
+}

@@ -1,0 +1,109 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Login";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SmartElderlyCare</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="login-body">
+    <div class="login-shell">
+        <div class="login-panel">
+            <div class="login-brand">
+                <div class="brand-mark">S</div>
+                <div>
+                    <h2>SmartElderlyCare</h2>
+                    <p>Care coordination that feels personal.</p>
+                </div>
+            </div>
+
+            <div class="login-hero">
+                <h1>Compassionate care, smarter decisions.</h1>
+                <p>
+                    Help your care team monitor patient health, coordinate services, and respond faster with a secure digital support hub.
+                </p>
+
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <div>
+                            <strong>Unified care overview</strong>
+                            <span>Track wellbeing, appointments, and daily support in one place.</span>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <div>
+                            <strong>Faster response times</strong>
+                            <span>Spot trends early and act with confidence.</span>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔒</div>
+                        <div>
+                            <strong>Secure communication</strong>
+                            <span>Keep family, staff, and caregivers aligned safely.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-card">
+            <div>
+                <span class="eyebrow">Welcome back</span>
+                <h1>Sign in</h1>
+                <p class="login-subtitle">Access your care dashboard and continue supporting your community.</p>
+            </div>
+
+            @if (ViewData["LoginError"] is string loginError)
+            {
+                <div class="login-error" role="alert">@loginError</div>
+            }
+
+            <form class="login-form" asp-controller="Home" asp-action="Login" method="post">
+                <div class="form-field">
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" placeholder="name@smartelderlycare.com" required />
+                </div>
+
+                <div class="form-field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" placeholder="Enter your password" required />
+                </div>
+
+                <div class="form-row">
+                    <label class="form-check">
+                        <input type="checkbox" />
+                        <span>Remember me</span>
+                    </label>
+                    <a class="forgot-link" href="#">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn primary-button">Sign in</button>
+            </form>
+
+            <div class="divider"><span>or continue with</span></div>
+
+            <div class="social-buttons">
+                <button type="button" class="social-button">
+                    <span class="badge">G</span>
+                    Google
+                </button>
+                <button type="button" class="social-button">
+                    <span class="badge">M</span>
+                    Microsoft
+                </button>
+            </div>
+
+            <p class="signup-link">Need an account? <a href="#">Create one</a></p>
+        </div>
+    </div>
+</body>
+</html>

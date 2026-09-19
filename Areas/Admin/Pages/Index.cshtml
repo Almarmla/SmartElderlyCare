@@ -1,0 +1,57 @@
+@page
+@model SmartElderlyCare.Areas.Admin.Pages.IndexModel
+@{
+    ViewData["Title"] = "Administration";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <span class="eyebrow">DHIO / HIU Administrator</span>
+        <h1 class="mt-3 mb-1">Administration</h1>
+        <p class="text-muted">Manage access and clinical thresholds after handover.</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm p-4">
+                <span class="text-muted">Active users</span>
+                <strong class="display-6">@Model.ActiveUserCount</strong>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm p-4">
+                <span class="text-muted">Active thresholds</span>
+                <strong class="display-6">@Model.ThresholdCount</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a class="btn primary-button px-4" asp-page="/Users/Index" asp-area="Admin">Manage users</a>
+        <a class="btn btn-outline-success" asp-page="/Thresholds/Edit" asp-area="Admin">Add threshold</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="h5">Thresholds by condition</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Condition</th><th>Metric</th><th>Range</th><th>Severity</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach (var threshold in Model.Thresholds)
+                    {
+                        <tr>
+                            <td>@(threshold.MedicalCondition ?? "All conditions")</td>
+                            <td>@threshold.Metric</td>
+                            <td>@threshold.MinimumValue - @threshold.MaximumValue @threshold.Unit</td>
+                            <td>@threshold.Severity</td>
+                            <td>@(threshold.IsActive ? "Active" : "Inactive")</td>
+                            <td><a asp-page="/Thresholds/Edit" asp-route-id="@threshold.Id" asp-area="Admin">Edit</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,22 @@
+## Build output
+bin/
+obj/
+
+## Visual Studio and VS Code local state
+.vs/
+.vscode/
+*.user
+*.suo
+
+## Local databases and runtime files
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+## Local secrets and environment overrides
+appsettings.Local.json
+appsettings.*.Local.json
+*.pfx
+

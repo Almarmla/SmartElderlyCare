@@ -1,0 +1,232 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Dashboard";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SmartElderlyCare</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="dashboard-page">
+    <aside class="dashboard-sidebar">
+        <a class="dashboard-brand" asp-controller="Home" asp-action="Dashboard">
+            <span class="dashboard-brand-mark">S</span>
+            <span>
+                <strong>SmartElderlyCare</strong>
+                <small>Care coordination</small>
+            </span>
+        </a>
+
+        <nav class="dashboard-nav" aria-label="Dashboard navigation">
+            <a class="dashboard-nav-link active" asp-controller="Home" asp-action="Dashboard">
+                <span>⌂</span> Overview
+            </a>
+            <a class="dashboard-nav-link" asp-controller="Workspace" asp-action="Index">
+                <span>◇</span> My workspace
+            </a>
+            <a class="dashboard-nav-link" asp-controller="Patients" asp-action="Index">
+                <span>♙</span> Residents
+            </a>
+            <a class="dashboard-nav-link" href="#schedule">
+                <span>▣</span> Schedule
+            </a>
+            <a class="dashboard-nav-link" href="#messages">
+                <span>✉</span> Messages
+            </a>
+            <a class="dashboard-nav-link" href="#reports">
+                <span>◫</span> Reports
+            </a>
+        </nav>
+
+        <div class="sidebar-help">
+            <span class="sidebar-help-icon">?</span>
+            <strong>Need a hand?</strong>
+            <p>Our support team is here to help you.</p>
+            <a href="#support">Contact support <span>→</span></a>
+        </div>
+
+        <form class="dashboard-logout-form" asp-controller="Home" asp-action="Logout" method="post">
+            <button class="dashboard-logout" type="submit"><span>↪</span> Sign out</button>
+        </form>
+    </aside>
+
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div>
+                <p class="dashboard-greeting">@ViewData["CatDate"] CAT</p>
+                <h1>@ViewData["Greeting"], @User.Identity?.Name <span>👋</span></h1>
+                <p class="dashboard-subtitle">Here is what is happening with your care team today.</p>
+            </div>
+            <div class="dashboard-header-actions">
+                <button class="icon-button" type="button" aria-label="View notifications">
+                    ♢
+                    <span class="notification-dot"></span>
+                </button>
+                <div class="user-avatar">AM</div>
+                <div class="user-details">
+                    <strong>@User.Identity?.Name</strong>
+                    <span>@ViewData["UserRole"]</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="dashboard-stats" aria-label="Care summary">
+            <article class="stat-card stat-card-green">
+                <div class="stat-card-top">
+                    <span class="stat-icon">♙</span>
+                    <span class="stat-trend">+8.2%</span>
+                </div>
+                <span class="stat-label">Active residents</span>
+                <strong class="stat-value">24</strong>
+                <span class="stat-footnote">Compared with last month</span>
+            </article>
+            <article class="stat-card stat-card-blue">
+                <div class="stat-card-top">
+                    <span class="stat-icon">♥</span>
+                    <span class="stat-trend">All stable</span>
+                </div>
+                <span class="stat-label">Wellbeing status</span>
+                <strong class="stat-value">92%</strong>
+                <span class="stat-footnote">Residents feeling well today</span>
+            </article>
+            <article class="stat-card stat-card-purple">
+                <div class="stat-card-top">
+                    <span class="stat-icon">▣</span>
+                    <span class="stat-trend">Today</span>
+                </div>
+                <span class="stat-label">Upcoming visits</span>
+                <strong class="stat-value">08</strong>
+                <span class="stat-footnote">Across 4 care locations</span>
+            </article>
+            <article class="stat-card stat-card-orange">
+                <div class="stat-card-top">
+                    <span class="stat-icon">!</span>
+                    <span class="stat-trend stat-trend-alert">Needs attention</span>
+                </div>
+                <span class="stat-label">Open alerts</span>
+                <strong class="stat-value">03</strong>
+                <span class="stat-footnote">Review when you have a moment</span>
+            </article>
+        </section>
+
+        <section class="dashboard-grid">
+            <article class="dashboard-card wellbeing-card" id="residents">
+                <div class="card-heading">
+                    <div>
+                        <h2>Residents wellbeing</h2>
+                        <p>Weekly overview of resident check-ins</p>
+                    </div>
+                    <button class="card-link" type="button">View all <span>→</span></button>
+                </div>
+                <div class="wellbeing-chart" aria-label="Wellbeing chart">
+                    <div class="chart-y-axis"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+                    <div class="chart-area">
+                        <div class="chart-grid-lines"><i></i><i></i><i></i><i></i><i></i></div>
+                        <svg class="chart-line" viewBox="0 0 640 190" role="img" aria-label="Wellbeing increased to 92 percent">
+                            <defs>
+                                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#55b7a4" stop-opacity=".28" />
+                                    <stop offset="100%" stop-color="#55b7a4" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <path class="chart-fill" d="M0,130 C50,122 60,145 105,118 S165,96 210,112 S260,82 310,93 S362,108 410,75 S470,86 510,64 S570,45 640,51 L640,190 L0,190 Z" />
+                            <path class="chart-stroke" d="M0,130 C50,122 60,145 105,118 S165,96 210,112 S260,82 310,93 S362,108 410,75 S470,86 510,64 S570,45 640,51" />
+                            <circle cx="640" cy="51" r="6" class="chart-point" />
+                        </svg>
+                        <div class="chart-x-axis"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+                    </div>
+                </div>
+                <div class="chart-summary">
+                    <span class="summary-dot"></span>
+                    <span>Overall wellbeing</span>
+                    <strong>92%</strong>
+                    <span class="summary-change">↑ 4.6% this week</span>
+                </div>
+            </article>
+
+            <article class="dashboard-card schedule-card" id="schedule">
+                <div class="card-heading">
+                    <div>
+                        <h2>Today's schedule</h2>
+                        <p>@ViewData["CatDate"]</p>
+                    </div>
+                    <button class="card-link" type="button">Full calendar <span>→</span></button>
+                </div>
+                <div class="schedule-list">
+                    <div class="schedule-item">
+                        <time>09:00</time>
+                        <span class="schedule-line schedule-line-green"></span>
+                        <div><strong>Morning check-in</strong><span>Mrs. Eleanor James · Room 204</span></div>
+                    </div>
+                    <div class="schedule-item">
+                        <time>11:30</time>
+                        <span class="schedule-line schedule-line-blue"></span>
+                        <div><strong>Physiotherapy session</strong><span>Mr. Robert Wilson · Therapy room</span></div>
+                    </div>
+                    <div class="schedule-item">
+                        <time>14:00</time>
+                        <span class="schedule-line schedule-line-purple"></span>
+                        <div><strong>Family care meeting</strong><span>Video call · The Thompson family</span></div>
+                    </div>
+                    <div class="schedule-item">
+                        <time>16:30</time>
+                        <span class="schedule-line schedule-line-orange"></span>
+                        <div><strong>Medication review</strong><span>Mrs. Margaret Lee · Room 108</span></div>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="dashboard-grid lower-grid">
+            <article class="dashboard-card alerts-card">
+                <div class="card-heading">
+                    <div>
+                        <h2>Needs your attention</h2>
+                        <p>Review these updates from your team</p>
+                    </div>
+                    <span class="alert-count">3 new</span>
+                </div>
+                <div class="alert-list">
+                    <div class="alert-item alert-item-warning">
+                        <span class="alert-icon">!</span>
+                        <div><strong>Missed check-in</strong><span>David Brown has not checked in since 08:30.</span></div>
+                        <button type="button" aria-label="Open missed check-in">→</button>
+                    </div>
+                    <div class="alert-item alert-item-info">
+                        <span class="alert-icon">i</span>
+                        <div><strong>New care note added</strong><span>Sarah Patel's daughter left a note for the team.</span></div>
+                        <button type="button" aria-label="Open care note">→</button>
+                    </div>
+                    <div class="alert-item alert-item-success">
+                        <span class="alert-icon">✓</span>
+                        <div><strong>Medication completed</strong><span>All morning medication rounds are complete.</span></div>
+                        <button type="button" aria-label="Open medication update">→</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="dashboard-card quick-actions-card" id="messages">
+                <div class="card-heading">
+                    <div>
+                        <h2>Quick actions</h2>
+                        <p>Common tasks at your fingertips</p>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <a asp-controller="Workspace" asp-action="Index"><span class="quick-action-icon quick-action-blue">◇</span><span><strong>Open my workspace</strong><small>See actions for your role</small></span><b>→</b></a>
+                    <a asp-controller="Patients" asp-action="Register"><span class="quick-action-icon quick-action-green">+</span><span><strong>Add a resident</strong><small>Create a new care profile</small></span><b>→</b></a>
+                    <a href="#message-team"><span class="quick-action-icon quick-action-blue">✉</span><span><strong>Message the team</strong><small>Share an update or question</small></span><b>→</b></a>
+                    <a href="#report"><span class="quick-action-icon quick-action-purple">▥</span><span><strong>Generate a report</strong><small>Export a care summary</small></span><b>→</b></a>
+                </div>
+            </article>
+        </section>
+    </main>
+</div>
+</body>
+</html>
