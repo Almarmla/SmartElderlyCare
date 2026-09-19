@@ -20,6 +20,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 builder.Services.AddAuthentication()
     .AddCookie("AdminCookie", options =>
     {
@@ -35,7 +40,7 @@ builder.Services.AddScoped<Dhis2MonthlyExportService>();
 
 var app = builder.Build();
 
-await SeedRolesAsync(app.Services);
+await InitializeDatabaseAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -60,54 +65,49 @@ app.MapRazorPages();
 
 app.Run();
 
-static async Task SeedRolesAsync(IServiceProvider services)
+static async Task InitializeDatabaseAsync(IServiceProvider services)
 {
     using var scope = services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("RoleSeeding");
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseInitialization");
 
     try
     {
-        if (!await dbContext.Database.CanConnectAsync())
-        {
-            logger.LogWarning(
-                "Identity roles were not seeded because the configured database is unavailable. " +
-                "Check ConnectionStrings:DefaultConnection.");
-            return;
-        }
+        await dbContext.Database.EnsureCreatedAsync();
+        logger.LogInformation("SmartElderlyCare database is ready.");
 
-    foreach (var role in new[]
-    {
-        ApplicationRoles.Nurse,
-        ApplicationRoles.FacilityNurse,
-        ApplicationRoles.VHW,
-        ApplicationRoles.RecordsStaff,
-        ApplicationRoles.Family,
-        ApplicationRoles.HiuClerk,
-        ApplicationRoles.DhioAdmin,
-        ApplicationRoles.Dmo
-    })
-    {
-        if (await roleManager.RoleExistsAsync(role))
+        foreach (var role in new[]
         {
-            continue;
-        }
+            ApplicationRoles.Nurse,
+            ApplicationRoles.FacilityNurse,
+            ApplicationRoles.VHW,
+            ApplicationRoles.RecordsStaff,
+            ApplicationRoles.Family,
+            ApplicationRoles.HiuClerk,
+            ApplicationRoles.DhioAdmin,
+            ApplicationRoles.Dmo
+        })
+        {
+            if (await roleManager.RoleExistsAsync(role))
+            {
+                continue;
+            }
 
-        var result = await roleManager.CreateAsync(new IdentityRole(role));
-        if (!result.Succeeded)
-        {
-            var errors = string.Join("; ", result.Errors.Select(error => error.Description));
-            throw new InvalidOperationException($"Could not seed Identity role '{role}': {errors}");
+            var result = await roleManager.CreateAsync(new IdentityRole(role));
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(error => error.Description));
+                throw new InvalidOperationException($"Could not seed Identity role '{role}': {errors}");
+            }
         }
-    }
 
         logger.LogInformation("Identity roles are ready.");
     }
-    catch (DbException exception)
+    catch (Exception exception)
     {
         logger.LogError(
             exception,
-            "Identity roles could not be seeded because the configured database is unavailable.");
+            "The SmartElderlyCare database could not be initialized. The application will continue, but data features may be unavailable.");
     }
 }

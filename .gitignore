@@ -14,9 +14,11 @@ obj/
 *.db-wal
 *.mdf
 *.ldf
+SmartElderlyCare.db
+SmartElderlyCare.db-shm
+SmartElderlyCare.db-wal
 
 ## Local secrets and environment overrides
 appsettings.Local.json
 appsettings.*.Local.json
 *.pfx
-

@@ -228,6 +228,8 @@ The Identity-protected admin area is available at:
 
 Only users in the `DhioAdmin` role can access these pages. Administrators can create, edit, reactivate, and deactivate accounts, assign seeded roles, and create or edit condition-specific clinical thresholds. Changes are recorded in `AdministrationAuditLog`.
 
+Created users sign in at `/Account/Login` with the email and password assigned by the administrator. Successful Identity login redirects to `/Workspace/Index`, where the selected role determines the available actions. Role-protected pages then enforce the same Identity role (`Nurse`, `FacilityNurse`, `VHW`, `Family`, `RecordsStaff`, `HiuClerk`, `DhioAdmin`, or `Dmo`).
+
 ## Prerequisites
 
 Install the following before running the project:
@@ -235,15 +237,13 @@ Install the following before running the project:
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - A supported code editor, such as [Visual Studio](https://visualstudio.microsoft.com/) or [Visual Studio Code](https://code.visualstudio.com/)
 
-SQL Server is included as an Entity Framework Core dependency, but no database connection is currently required to display the login page.
+The application uses SQL Server by default. The development connection string targets the `(localdb)\MSSQLLocalDB` instance and Entity Framework Core creates the `SmartElderlyCare` database on startup, then seeds the application roles. SQL Server (or LocalDB) must be installed and running before starting the application. SQL Server Management Studio (SSMS) can be used to connect to and inspect the database; SSMS itself is a management client and does not provide the SQL Server database engine.
 
-Identity role seeding and the facility nurse data-capture workflow require a reachable SQL Server instance. The default development connection targets:
+The SQL Server database stores Identity users and roles, residents, vital-sign readings, facility visits, welfare observations, thresholds, alerts, monthly returns, DHIS2 submissions, district reports, and administration audit logs. The existing `SmartElderlyCare.db` SQLite file is not used or migrated automatically. If SQL Server is installed under a different instance name, update `ConnectionStrings:DefaultConnection` in `appsettings.json`, for example:
 
-```text
-(localdb)\MSSQLLocalDB
+```json
+"DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=SmartElderlyCare;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
 ```
-
-If LocalDB is not installed, update `ConnectionStrings:DefaultConnection` in `appsettings.json` to point to an available SQL Server. The web application logs a warning and continues starting when the database is unavailable, but role seeding and database writes will remain unavailable until the connection is fixed.
 
 ## Run the application
 
@@ -323,7 +323,7 @@ Recommended next steps for turning the UI into a complete application:
 3. Add server-side model validation and authentication error messages.
 4. Replace the social sign-in placeholders with OAuth/OpenID Connect providers.
 5. Add an authenticated care dashboard.
-6. Configure and apply Entity Framework Core database migrations.
+6. The SQL Server database is created automatically on first startup. Back up the `SmartElderlyCare` database before moving or resetting the development environment.
 7. Add automated tests for authentication and protected routes.
 
 ## License

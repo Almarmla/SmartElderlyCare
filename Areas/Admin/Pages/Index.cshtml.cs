@@ -7,7 +7,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages;
 
-[Authorize(Roles = ApplicationRoles.DhioAdmin)]
+[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin)]
 public class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;

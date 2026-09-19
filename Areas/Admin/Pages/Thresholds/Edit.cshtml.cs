@@ -8,7 +8,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.Thresholds;
 
-[Authorize(Roles = ApplicationRoles.DhioAdmin)]
+[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin)]
 public class EditModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
@@ -83,17 +83,19 @@ public class EditModel : PageModel
         threshold.Severity = Input.Severity;
         threshold.IsActive = Input.IsActive;
 
-        var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-            ?? throw new InvalidOperationException("The administrator identity is missing.");
-        _dbContext.AdministrationAuditLogs.Add(new AdministrationAuditLog
+        var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(adminId))
         {
-            Action = action,
-            EntityName = nameof(Threshold),
-            EntityId = threshold.Id.ToString(),
-            Threshold = threshold,
-            PerformedByUserId = adminId,
-            Details = $"{action} for {threshold.MedicalCondition ?? "all conditions"}."
-        });
+            _dbContext.AdministrationAuditLogs.Add(new AdministrationAuditLog
+            {
+                Action = action,
+                EntityName = nameof(Threshold),
+                EntityId = threshold.Id.ToString(),
+                Threshold = threshold,
+                PerformedByUserId = adminId,
+                Details = $"{action} for {threshold.MedicalCondition ?? "all conditions"}."
+            });
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return RedirectToPage("/Index", new { area = "Admin" });

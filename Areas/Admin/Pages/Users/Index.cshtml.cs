@@ -9,7 +9,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.Users;
 
-[Authorize(Roles = ApplicationRoles.DhioAdmin)]
+[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin)]
 public class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
@@ -164,7 +164,7 @@ public class IndexModel : PageModel
         var adminId = _userManager.GetUserId(User);
         if (string.IsNullOrWhiteSpace(adminId))
         {
-            throw new InvalidOperationException("The administrator identity is missing.");
+            return;
         }
 
         _dbContext.AdministrationAuditLogs.Add(new AdministrationAuditLog

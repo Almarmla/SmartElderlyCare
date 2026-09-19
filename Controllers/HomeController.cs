@@ -59,7 +59,8 @@ public class HomeController : Controller
         {
             new Claim(ClaimTypes.Name, admin["Name"] ?? configuredEmail),
             new Claim(ClaimTypes.Email, configuredEmail),
-            new Claim(ClaimTypes.Role, "Administrator")
+            new Claim(ClaimTypes.Role, "Administrator"),
+            new Claim(ClaimTypes.Role, ApplicationRoles.DhioAdmin)
         };
         var identity = new ClaimsIdentity(claims, "AdminCookie");
         var principal = new ClaimsPrincipal(identity);
