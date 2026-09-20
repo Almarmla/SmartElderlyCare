@@ -7,10 +7,12 @@ namespace SmartElderlyCare.Services;
 public class AlertService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IVitalEvaluator _vitalEvaluator;
 
-    public AlertService(ApplicationDbContext dbContext)
+    public AlertService(ApplicationDbContext dbContext, IVitalEvaluator vitalEvaluator)
     {
         _dbContext = dbContext;
+        _vitalEvaluator = vitalEvaluator;
     }
 
     public async Task<IReadOnlyList<Alert>> CheckThresholds(
@@ -47,6 +49,9 @@ public class AlertService
                 ThresholdId = threshold.Id,
                 Type = AlertType.VitalSigns,
                 Severity = threshold.Severity,
+                VitalStatus = _vitalEvaluator.Evaluate(threshold.Metric.ToString(), value.Value),
+                Metric = threshold.Metric.ToString(),
+                Value = value.Value,
                 Message = $"{threshold.Name}: recorded value {value.Value:0.##}{FormatUnit(threshold.Unit)} is outside the configured range.",
                 CreatedAt = reading.RecordedAt
             });

@@ -153,6 +153,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(threshold => threshold.Severity).HasConversion<string>().HasMaxLength(20);
             entity.Property(threshold => threshold.MinimumValue).HasPrecision(10, 2);
             entity.Property(threshold => threshold.MaximumValue).HasPrecision(10, 2);
+            entity.Property(threshold => threshold.CriticalLow).HasPrecision(10, 2);
+            entity.Property(threshold => threshold.CriticalHigh).HasPrecision(10, 2);
         });
 
         builder.Entity<AdministrationAuditLog>(entity =>
@@ -197,6 +199,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(alert => alert.Type).HasConversion<string>().HasMaxLength(30);
             entity.Property(alert => alert.Severity).HasConversion<string>().HasMaxLength(20);
             entity.Property(alert => alert.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(alert => alert.VitalStatus).HasConversion<string>().HasMaxLength(20);
+            entity.Property(alert => alert.Metric).HasMaxLength(40);
+            entity.Property(alert => alert.Value).HasPrecision(10, 2);
             entity.Property(alert => alert.Message).HasMaxLength(1000).IsRequired();
             entity.HasOne(alert => alert.Patient)
                 .WithMany(patient => patient.Alerts)

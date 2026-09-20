@@ -42,6 +42,8 @@ public class EditModel : PageModel
             Metric = threshold.Metric,
             MinimumValue = threshold.MinimumValue,
             MaximumValue = threshold.MaximumValue,
+            CriticalLow = threshold.CriticalLow,
+            CriticalHigh = threshold.CriticalHigh,
             Unit = threshold.Unit,
             Severity = threshold.Severity,
             IsActive = threshold.IsActive
@@ -54,6 +56,16 @@ public class EditModel : PageModel
         if (Input.MinimumValue.HasValue && Input.MaximumValue.HasValue && Input.MinimumValue > Input.MaximumValue)
         {
             ModelState.AddModelError(nameof(Input.MaximumValue), "Maximum must be greater than or equal to minimum.");
+        }
+
+        if (Input.CriticalLow.HasValue && Input.MinimumValue.HasValue && Input.CriticalLow >= Input.MinimumValue)
+        {
+            ModelState.AddModelError(nameof(Input.CriticalLow), "Critical low must be less than minimum.");
+        }
+
+        if (Input.CriticalHigh.HasValue && Input.MaximumValue.HasValue && Input.CriticalHigh <= Input.MaximumValue)
+        {
+            ModelState.AddModelError(nameof(Input.CriticalHigh), "Critical high must be greater than maximum.");
         }
 
         if (!ModelState.IsValid)
@@ -79,6 +91,8 @@ public class EditModel : PageModel
         threshold.Metric = Input.Metric;
         threshold.MinimumValue = Input.MinimumValue;
         threshold.MaximumValue = Input.MaximumValue;
+        threshold.CriticalLow = Input.CriticalLow;
+        threshold.CriticalHigh = Input.CriticalHigh;
         threshold.Unit = Input.Unit;
         threshold.Severity = Input.Severity;
         threshold.IsActive = Input.IsActive;
@@ -120,6 +134,12 @@ public class EditModel : PageModel
 
         [Display(Name = "Maximum value")]
         public decimal? MaximumValue { get; set; }
+
+        [Display(Name = "Critical low")]
+        public decimal? CriticalLow { get; set; }
+
+        [Display(Name = "Critical high")]
+        public decimal? CriticalHigh { get; set; }
 
         [StringLength(30)]
         public string? Unit { get; set; }

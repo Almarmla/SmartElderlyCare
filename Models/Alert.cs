@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace SmartElderlyCare.Models;
 
 public class Alert
@@ -5,6 +7,13 @@ public class Alert
     public long Id { get; set; }
 
     public int PatientId { get; set; }
+
+    [NotMapped]
+    public int ResidentId
+    {
+        get => PatientId;
+        set => PatientId = value;
+    }
 
     public Patient Patient { get; set; } = null!;
 
@@ -21,6 +30,14 @@ public class Alert
     public AlertSeverity Severity { get; set; } = AlertSeverity.Medium;
 
     public AlertStatus Status { get; set; } = AlertStatus.Open;
+
+    public VitalStatus VitalStatus { get; set; } = VitalStatus.Warning;
+
+    public string? Metric { get; set; }
+
+    public decimal? Value { get; set; }
+
+    public bool IsRead { get; set; }
 
     public bool Reviewed { get; set; }
 

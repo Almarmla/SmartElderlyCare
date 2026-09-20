@@ -18,6 +18,8 @@
             <div class="col-md-6"><label asp-for="Input.Metric" class="form-label"></label><select asp-for="Input.Metric" asp-items="Html.GetEnumSelectList<ThresholdMetric>()" class="form-select"></select></div>
             <div class="col-md-3"><label asp-for="Input.MinimumValue" class="form-label"></label><input asp-for="Input.MinimumValue" class="form-control" /></div>
             <div class="col-md-3"><label asp-for="Input.MaximumValue" class="form-label"></label><input asp-for="Input.MaximumValue" class="form-control" /></div>
+            <div class="col-md-3"><label asp-for="Input.CriticalLow" class="form-label"></label><input asp-for="Input.CriticalLow" class="form-control" /></div>
+            <div class="col-md-3"><label asp-for="Input.CriticalHigh" class="form-label"></label><input asp-for="Input.CriticalHigh" class="form-control" /></div>
             <div class="col-md-4"><label asp-for="Input.Unit" class="form-label"></label><input asp-for="Input.Unit" class="form-control" placeholder="e.g. mmHg" /></div>
             <div class="col-md-4"><label asp-for="Input.Severity" class="form-label"></label><select asp-for="Input.Severity" asp-items="Html.GetEnumSelectList<AlertSeverity>()" class="form-select"></select></div>
             <div class="col-md-4 d-flex align-items-end"><div class="form-check mb-2"><input asp-for="Input.IsActive" class="form-check-input" /><label asp-for="Input.IsActive" class="form-check-label"></label></div></div>

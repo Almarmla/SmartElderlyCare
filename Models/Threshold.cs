@@ -14,6 +14,10 @@ public class Threshold
 
     public decimal? MaximumValue { get; set; }
 
+    public decimal? CriticalLow { get; set; }
+
+    public decimal? CriticalHigh { get; set; }
+
     public string? Unit { get; set; }
 
     public AlertSeverity Severity { get; set; } = AlertSeverity.Medium;

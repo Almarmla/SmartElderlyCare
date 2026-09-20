@@ -36,6 +36,7 @@ builder.Services.AddAuthentication()
     });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<AlertService>();
+builder.Services.AddScoped<IVitalEvaluator, VitalEvaluator>();
 builder.Services.AddScoped<Dhis2MonthlyExportService>();
 
 var app = builder.Build();
@@ -74,7 +75,7 @@ static async Task InitializeDatabaseAsync(IServiceProvider services)
 
     try
     {
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.MigrateAsync();
         logger.LogInformation("SmartElderlyCare database is ready.");
 
         foreach (var role in new[]
@@ -103,6 +104,8 @@ static async Task InitializeDatabaseAsync(IServiceProvider services)
         }
 
         logger.LogInformation("Identity roles are ready.");
+        await DbSeeder.SeedThresholdsAsync(dbContext);
+        logger.LogInformation("Thresholds are ready.");
     }
     catch (Exception exception)
     {

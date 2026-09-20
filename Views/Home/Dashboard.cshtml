@@ -11,6 +11,7 @@
     <title>@ViewData["Title"] - SmartElderlyCare</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
 </head>
 <body>
 <div class="dashboard-page">
@@ -24,7 +25,7 @@
         </a>
 
         <nav class="dashboard-nav" aria-label="Dashboard navigation">
-            <a class="dashboard-nav-link active" asp-controller="Home" asp-action="Dashboard">
+            <a class="dashboard-nav-link" asp-controller="Home" asp-action="Dashboard">
                 <span>⌂</span> Overview
             </a>
             <a class="dashboard-nav-link" asp-controller="Workspace" asp-action="Index">
@@ -42,6 +43,12 @@
             <a class="dashboard-nav-link" href="#reports">
                 <span>◫</span> Reports
             </a>
+            @if (User.IsInRole(ApplicationRoles.DhioAdmin) || User.IsInRole("Administrator"))
+            {
+                <a class="dashboard-nav-link" asp-area="Admin" asp-page="/Roles/Index">
+                    <span>⚙</span> Roles
+                </a>
+            }
         </nav>
 
         <div class="sidebar-help">
@@ -113,6 +120,20 @@
                 <strong class="stat-value">03</strong>
                 <span class="stat-footnote">Review when you have a moment</span>
             </article>
+        </section>
+
+        <section class="dashboard-card mb-4" id="unread-alerts" aria-live="polite">
+            <div class="card-heading">
+                <div>
+                    <h2>Unread alerts</h2>
+                    <p>Critical alerts appear first and refresh every 30 seconds.</p>
+                </div>
+                <span class="small text-muted" id="alerts-last-updated"></span>
+            </div>
+            @Html.AntiForgeryToken()
+            <div id="unread-alert-list">
+                <p class="text-muted mb-0">Loading alerts...</p>
+            </div>
         </section>
 
         <section class="dashboard-grid">
@@ -228,5 +249,90 @@
         </section>
     </main>
 </div>
+
+<script>
+    (() => {
+        const alertList = document.getElementById("unread-alert-list");
+        const lastUpdated = document.getElementById("alerts-last-updated");
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const alertsUrl = "@Url.Action("UnreadAlerts", "Home")";
+        const markReadUrl = "@Url.Action("MarkAlertRead", "Home")";
+
+        const escapeHtml = (value) => String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+        const formatValue = (value) => value === null || value === undefined
+            ? "—"
+            : Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+        const formatTime = (value) => new Date(value).toLocaleString();
+
+        const renderAlerts = (alerts) => {
+            if (!alerts.length) {
+                alertList.innerHTML = '<p class="text-muted mb-0">No unread alerts.</p>';
+                return;
+            }
+
+            alertList.innerHTML = alerts.map((alert) => {
+                const isCritical = alert.status === "Critical";
+                const colorClass = isCritical ? "text-danger" : "text-warning";
+                const borderClass = isCritical ? "border-danger" : "border-warning";
+                return `
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 border-start border-4 ${borderClass} rounded p-3 mb-2">
+                        <div>
+                            <strong class="${colorClass}">${escapeHtml(alert.status)}</strong>
+                            <div>${escapeHtml(alert.residentName)} · ${escapeHtml(alert.metric ?? "Vital sign")}: ${escapeHtml(formatValue(alert.value))}</div>
+                            <small class="text-muted">${escapeHtml(formatTime(alert.createdAt))}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary mark-alert-read" type="button" data-alert-id="${alert.id}">Mark as read</button>
+                    </div>`;
+            }).join("");
+
+            alertList.querySelectorAll(".mark-alert-read").forEach((button) => {
+                button.addEventListener("click", async () => {
+                    button.disabled = true;
+                    const body = new URLSearchParams({
+                        __RequestVerificationToken: token,
+                        alertId: button.dataset.alertId
+                    });
+                    const response = await fetch(markReadUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body
+                    });
+
+                    if (response.ok) {
+                        await loadAlerts();
+                    } else {
+                        button.disabled = false;
+                    }
+                });
+            });
+        };
+
+        const loadAlerts = async () => {
+            try {
+                const response = await fetch(alertsUrl, { headers: { Accept: "application/json" } });
+                if (!response.ok) {
+                    throw new Error(`Alert request failed with status ${response.status}.`);
+                }
+
+                renderAlerts(await response.json());
+                lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                alertList.innerHTML = '<p class="text-danger mb-0">Alerts could not be loaded.</p>';
+                console.error(error);
+            }
+        };
+
+        loadAlerts();
+        window.setInterval(loadAlerts, 30000);
+    })();
+</script>
+
 </body>
 </html>
