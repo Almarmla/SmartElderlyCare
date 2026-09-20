@@ -111,7 +111,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(visit => visit.VitalSignsReading)
                 .WithMany(reading => reading.FacilityVisits)
                 .HasForeignKey(visit => visit.VitalSignsReadingId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         builder.Entity<WelfareObservation>(entity =>
@@ -223,11 +223,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(returnItem => returnItem.SubmittedByUser)
                 .WithMany(user => user.SubmittedMonthlyReturns)
                 .HasForeignKey(returnItem => returnItem.SubmittedByUserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(returnItem => returnItem.ReviewedByUser)
                 .WithMany(user => user.ReviewedMonthlyReturns)
                 .HasForeignKey(returnItem => returnItem.ReviewedByUserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
             entity.Property(returnItem => returnItem.ReviewNotes).HasMaxLength(4000);
         });
 
