@@ -34,8 +34,7 @@ public class RegisterModel : PageModel
                     .Select(check => new WelfareCheckSummary
                     {
                         ObservedAt = check.ObservedAt,
-                        Status = check.Status,
-                        MedicationTaken = check.MedicationTaken
+                        Status = check.Status
                     })
                     .FirstOrDefault()
             })
@@ -70,9 +69,6 @@ public class RegisterModel : PageModel
         public string? MedicalCondition { get; init; }
 
         public WelfareCheckSummary? MostRecentCheck { get; init; }
-
-        public bool IsOverdue(DateTimeOffset currentTime) =>
-            MostRecentCheck is null || MostRecentCheck.ObservedAt < currentTime.AddDays(-30);
     }
 
     public sealed class WelfareCheckSummary
@@ -80,7 +76,5 @@ public class RegisterModel : PageModel
         public DateTimeOffset ObservedAt { get; init; }
 
         public VhwWelfareStatus Status { get; init; }
-
-        public bool MedicationTaken { get; init; }
     }
 }
