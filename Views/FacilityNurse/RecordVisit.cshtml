@@ -24,7 +24,9 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label asp-for="PatientId" class="form-label"></label>
-                        <input asp-for="PatientId" class="form-control" />
+                        <select asp-for="PatientId" asp-items="ViewBag.Patients" class="form-select">
+                            <option value="">Choose a patient</option>
+                        </select>
                         <span asp-validation-for="PatientId" class="text-danger"></span>
                     </div>
                     <div class="col-md-8">
@@ -64,6 +66,21 @@
                         <label asp-for="BloodGlucoseMgDl" class="form-label"></label>
                         <input asp-for="BloodGlucoseMgDl" class="form-control" />
                         <span asp-validation-for="BloodGlucoseMgDl" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="RespiratoryRate" class="form-label"></label>
+                        <input asp-for="RespiratoryRate" class="form-control" />
+                        <span asp-validation-for="RespiratoryRate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="OxygenSaturation" class="form-label"></label>
+                        <input asp-for="OxygenSaturation" class="form-control" />
+                        <span asp-validation-for="OxygenSaturation" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="WeightKilograms" class="form-label"></label>
+                        <input asp-for="WeightKilograms" class="form-control" />
+                        <span asp-validation-for="WeightKilograms" class="text-danger"></span>
                     </div>
                 </div>
             </div>

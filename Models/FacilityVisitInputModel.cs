@@ -33,6 +33,18 @@ public class FacilityVisitInputModel
     [Display(Name = "Blood glucose (mg/dL)")]
     public decimal? BloodGlucoseMgDl { get; set; }
 
+    [Range(5, 80, ErrorMessage = "Respiratory rate must be between 5 and 80 breaths per minute.")]
+    [Display(Name = "Respiratory rate (breaths/min)")]
+    public int? RespiratoryRate { get; set; }
+
+    [Range(50, 100, ErrorMessage = "Oxygen saturation must be between 50 and 100%.")]
+    [Display(Name = "Oxygen saturation (%)")]
+    public decimal? OxygenSaturation { get; set; }
+
+    [Range(1, 500, ErrorMessage = "Weight must be between 1 and 500 kg.")]
+    [Display(Name = "Weight (kg)")]
+    public decimal? WeightKilograms { get; set; }
+
     [Required]
     [StringLength(2000, MinimumLength = 2)]
     public string Diagnosis { get; set; } = string.Empty;

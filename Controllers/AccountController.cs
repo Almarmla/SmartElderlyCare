@@ -32,6 +32,64 @@ public class AccountController : Controller
     }
 
     [AllowAnonymous]
+    [HttpGet]
+    public IActionResult Register()
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToAction("Index", "Workspace");
+        }
+
+        return View(new RegisterInputModel());
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterInputModel model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = model.Email.Trim(),
+            Email = model.Email.Trim(),
+            DisplayName = model.DisplayName.Trim(),
+            IsActive = true
+        };
+
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(
+                    error.Code == "DuplicateUserName" || error.Code == "DuplicateEmail"
+                        ? nameof(model.Email)
+                        : string.Empty,
+                    error.Description);
+            }
+
+            return View(model);
+        }
+
+        var roleResult = await _userManager.AddToRoleAsync(user, ApplicationRoles.Family);
+        if (!roleResult.Succeeded)
+        {
+            await _userManager.DeleteAsync(user);
+            var errors = string.Join(" ", roleResult.Errors.Select(error => error.Description));
+            ModelState.AddModelError(string.Empty, $"The account could not be completed: {errors}");
+            return View(model);
+        }
+
+        await _signInManager.SignInAsync(user, isPersistent: false);
+        return RedirectToAction("Index", "Workspace");
+    }
+
+    [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginInputModel model, CancellationToken cancellationToken)
@@ -100,5 +158,25 @@ public class AccountController : Controller
         public bool RememberMe { get; set; }
 
         public string? ReturnUrl { get; set; }
+    }
+
+    public class RegisterInputModel
+    {
+        [Required]
+        [StringLength(200, MinimumLength = 2)]
+        [Display(Name = "Full name")]
+        public string DisplayName { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, DataType(DataType.Password)]
+        [StringLength(100, MinimumLength = 8)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required, DataType(DataType.Password)]
+        [Compare(nameof(Password), ErrorMessage = "The passwords do not match.")]
+        [Display(Name = "Confirm password")]
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

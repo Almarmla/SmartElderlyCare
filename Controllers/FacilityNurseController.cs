@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SmartElderlyCare.Data;
 using SmartElderlyCare.Models;
@@ -20,8 +21,9 @@ public class FacilityNurseController : Controller
     }
 
     [HttpGet]
-    public IActionResult RecordVisit()
+    public async Task<IActionResult> RecordVisit(CancellationToken cancellationToken)
     {
+        await LoadPatientsAsync(cancellationToken);
         return View(new FacilityVisitInputModel());
     }
 
@@ -46,6 +48,7 @@ public class FacilityNurseController : Controller
 
         if (!ModelState.IsValid)
         {
+            await LoadPatientsAsync(cancellationToken);
             return View(model);
         }
 
@@ -57,7 +60,10 @@ public class FacilityNurseController : Controller
             DiastolicBloodPressure = model.DiastolicBloodPressure,
             PulseRate = model.PulseRate,
             TemperatureCelsius = model.TemperatureCelsius,
+            RespiratoryRate = model.RespiratoryRate,
+            OxygenSaturation = model.OxygenSaturation,
             BloodGlucoseMgDl = model.BloodGlucoseMgDl,
+            WeightKilograms = model.WeightKilograms,
             RecordedAt = DateTimeOffset.UtcNow
         };
 
@@ -80,5 +86,29 @@ public class FacilityNurseController : Controller
 
         TempData["SuccessMessage"] = "The facility visit was recorded successfully.";
         return RedirectToAction(nameof(RecordVisit));
+    }
+
+    private async Task LoadPatientsAsync(CancellationToken cancellationToken)
+    {
+        var patients = await _dbContext.Patients
+            .AsNoTracking()
+            .Where(patient => patient.IsActive)
+            .OrderBy(patient => patient.LastName)
+            .ThenBy(patient => patient.FirstName)
+            .Select(patient => new
+            {
+                patient.Id,
+                FullName = $"{patient.FirstName} {patient.LastName} ({patient.PatientNumber})"
+            })
+            .ToListAsync(cancellationToken);
+
+        ViewData["Patients"] = new SelectList(patients, nameof(PatientOption.Id), nameof(PatientOption.FullName));
+    }
+
+    private sealed class PatientOption
+    {
+        public int Id { get; init; }
+
+        public string FullName { get; init; } = string.Empty;
     }
 }

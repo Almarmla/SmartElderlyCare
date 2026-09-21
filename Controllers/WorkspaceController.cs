@@ -56,7 +56,14 @@ public class WorkspaceController : Controller
                 new("Configure thresholds", "Set safe ranges for each vital-sign metric and condition.", "", Page: "/Thresholds/Edit", Area: "Admin", Style: "purple"),
                 new("Review patient history", "Search registered patients and inspect their full capture history.", "Patients", "Index", Style: "blue")
             ],
-            ApplicationRoles.FacilityNurse or ApplicationRoles.Nurse =>
+            ApplicationRoles.FacilityNurse =>
+            [
+                new("Record facility visit", "Capture vital signs, diagnosis, and treatment for a patient.", "FacilityNurse", "RecordVisit"),
+                new("Monthly Facility Returns", "Compile completeness and diagnosis totals for the selected reporting month.", "", Page: "/Returns/MonthlySummary", Style: "purple"),
+                new("Find a patient", "Search a patient and review their previous readings and care captures.", "Patients", "Index", Style: "blue"),
+                new("Register patient", "Add an elderly patient to the chronic care programme.", "Patients", "Register", Style: "purple")
+            ],
+            ApplicationRoles.Nurse =>
             [
                 new("Record facility visit", "Capture vital signs, diagnosis, and treatment for a patient.", "FacilityNurse", "RecordVisit"),
                 new("Find a patient", "Search a patient and review their previous readings and care captures.", "Patients", "Index", Style: "blue"),
@@ -65,12 +72,20 @@ public class WorkspaceController : Controller
             ApplicationRoles.VHW =>
             [
                 new("Record welfare check", "Use the simple form to capture mobility, medication, condition, and notes.", "", Page: "/Vhw/WelfareCheck"),
+                new("VHW Register", "Review active elderly patients, recent welfare status, and overdue visits.", "", Page: "/Vhw/Register", Style: "purple"),
                 new("Find a patient", "Search a patient and review their previous welfare captures.", "Patients", "Index", Style: "blue")
             ],
-            ApplicationRoles.HiuClerk or ApplicationRoles.RecordsStaff =>
+            ApplicationRoles.HiuClerk =>
             [
                 new("Open HIU dashboard", "Review recent readings and work through alerts by severity.", "", Page: "/Hiu/Dashboard"),
                 new("Monthly DHIS2 report", "Export the selected month’s indicators as a DHIS2 CSV.", "", Page: "/Hiu/MonthlyReport", Style: "purple"),
+                new("Find a patient", "Retrieve a patient’s complete capture history.", "Patients", "Index", Style: "blue")
+            ],
+            ApplicationRoles.RecordsStaff =>
+            [
+                new("Open HIU dashboard", "Review recent readings and work through alerts by severity.", "", Page: "/Hiu/Dashboard"),
+                new("Monthly DHIS2 report", "Export the selected month’s indicators as a DHIS2 CSV.", "", Page: "/Hiu/MonthlyReport", Style: "purple"),
+                new("Monthly Facility Returns", "Compile completeness and diagnosis totals for the selected reporting month.", "", Page: "/Returns/MonthlySummary", Style: "purple"),
                 new("Find a patient", "Retrieve a patient’s complete capture history.", "Patients", "Index", Style: "blue")
             ],
             ApplicationRoles.Family =>

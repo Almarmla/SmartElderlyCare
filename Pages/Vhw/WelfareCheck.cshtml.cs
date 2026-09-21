@@ -24,9 +24,16 @@ public class WelfareCheckModel : PageModel
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
-    public async Task OnGetAsync(CancellationToken cancellationToken)
+    public async Task OnGetAsync(int? patientId, CancellationToken cancellationToken)
     {
         await LoadPatientsAsync(cancellationToken);
+
+        if (patientId.HasValue && await _dbContext.Patients.AnyAsync(
+                patient => patient.Id == patientId.Value && patient.IsActive,
+                cancellationToken))
+        {
+            Input.PatientId = patientId.Value;
+        }
     }
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)

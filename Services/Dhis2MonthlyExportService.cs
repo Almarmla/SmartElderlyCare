@@ -38,9 +38,9 @@ public class Dhis2MonthlyExportService
         var readings = _dbContext.VitalSignsReadings
             .AsNoTracking()
             .Where(reading => reading.RecordedAt >= start && reading.RecordedAt < end);
-        var welfareObservations = _dbContext.WelfareObservations
+        var welfareChecks = _dbContext.VhwWelfareChecks
             .AsNoTracking()
-            .Where(observation => observation.ObservedAt >= start && observation.ObservedAt < end);
+            .Where(check => check.ObservedAt >= start && check.ObservedAt < end);
 
         var indicatorRows = new List<Dhis2MonthlyIndicator>
         {
@@ -58,22 +58,22 @@ public class Dhis2MonthlyExportService
                 year,
                 month,
                 organisationUnit,
-                await welfareObservations.CountAsync(cancellationToken)),
+                await welfareChecks.CountAsync(cancellationToken)),
             CreateIndicator(
                 "urgent_welfare_observations",
                 year,
                 month,
                 organisationUnit,
-                await welfareObservations.CountAsync(
-                    observation => observation.Status == WelfareStatus.Urgent,
+                await welfareChecks.CountAsync(
+                    check => check.Status == VhwWelfareStatus.Urgent,
                     cancellationToken)),
             CreateIndicator(
                 "welfare_observations_needing_attention",
                 year,
                 month,
                 organisationUnit,
-                await welfareObservations.CountAsync(
-                    observation => observation.Status == WelfareStatus.NeedsAttention,
+                await welfareChecks.CountAsync(
+                    check => check.Status == VhwWelfareStatus.NeedsAttention,
                     cancellationToken))
         };
 
