@@ -60,6 +60,7 @@ public class IndexModel : PageModel
             UserName = Input.Email,
             Email = Input.Email,
             DisplayName = Input.DisplayName,
+            PhoneNumber = Input.PhoneNumber,
             EmailConfirmed = true,
             IsActive = true
         };
@@ -70,6 +71,7 @@ public class IndexModel : PageModel
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
+
             await LoadUsersAsync(cancellationToken);
             return Page();
         }
@@ -77,6 +79,34 @@ public class IndexModel : PageModel
         await _userManager.AddToRoleAsync(user, Input.Role);
         await AddAuditAsync(AdministrationAction.UserCreated, user.Id, user.Id, $"Created user with role {Input.Role}.");
         await _dbContext.SaveChangesAsync(cancellationToken);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostResetPasswordAsync(string id, string newPassword, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+        {
+            TempData["UserError"] = "The new password must contain at least 8 characters.";
+            return RedirectToPage();
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (!result.Succeeded)
+        {
+            TempData["UserError"] = string.Join("; ", result.Errors.Select(error => error.Description));
+            return RedirectToPage();
+        }
+
+        await AddAuditAsync(AdministrationAction.PasswordReset, user.Id, user.Id, "Reset user password.");
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        TempData["UserSuccess"] = $"Password reset for {user.DisplayName}.";
         return RedirectToPage();
     }
 
@@ -201,6 +231,10 @@ public class IndexModel : PageModel
 
         [Required, EmailAddress]
         public string Email { get; set; } = string.Empty;
+
+        [Required, Phone]
+        [Display(Name = "Contact phone")]
+        public string PhoneNumber { get; set; } = string.Empty;
 
         [Required, MinLength(8)]
         public string Password { get; set; } = string.Empty;

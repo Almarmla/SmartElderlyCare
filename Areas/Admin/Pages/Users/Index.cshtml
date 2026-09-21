@@ -14,11 +14,16 @@
     {
         <div class="alert alert-danger">@userError</div>
     }
+    @if (TempData["UserSuccess"] is string userSuccess)
+    {
+        <div class="alert alert-success">@userSuccess</div>
+    }
     <div class="card border-0 shadow-sm p-4 mb-4">
         <h2 class="h5">Create user account</h2>
         <form method="post" asp-page-handler="Create" class="row g-3">
             <div class="col-md-6"><label asp-for="Input.DisplayName" class="form-label"></label><input asp-for="Input.DisplayName" class="form-control" /></div>
             <div class="col-md-6"><label asp-for="Input.Email" class="form-label"></label><input asp-for="Input.Email" class="form-control" /></div>
+            <div class="col-md-6"><label asp-for="Input.PhoneNumber" class="form-label"></label><input asp-for="Input.PhoneNumber" class="form-control" placeholder="+263..." /></div>
             <div class="col-md-6"><label asp-for="Input.Password" class="form-label"></label><input asp-for="Input.Password" class="form-control" /></div>
             <div class="col-md-6">
                 <label asp-for="Input.Role" class="form-label"></label>
@@ -70,6 +75,16 @@
                                 <div class="col-lg-2"><label class="form-label small">Role</label><select name="role" class="form-select form-select-sm">@foreach (var role in Model.Roles) { <option value="@role" selected="@(Model.UserRoles[user.Id] == role)">@role</option> }</select></div>
                                 <div class="col-lg-2"><span class="small text-muted d-block">Status</span><span>@(user.IsActive ? "Active" : "Inactive")</span></div>
                                 <div class="col-lg-2 d-flex gap-1"><button class="btn btn-sm btn-outline-success" type="submit">Save</button></div>
+                            </form>
+                            <form method="post" asp-page-handler="ResetPassword" class="row g-2 align-items-end mt-2">
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <div class="col-lg-4">
+                                    <label class="form-label small" for="new-password-@user.Id">New password</label>
+                                    <input id="new-password-@user.Id" name="newPassword" type="password" minlength="8" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="col-lg-3">
+                                    <button class="btn btn-sm btn-outline-warning" type="submit">Reset password</button>
+                                </div>
                             </form>
                             @if (user.IsActive)
                             {
