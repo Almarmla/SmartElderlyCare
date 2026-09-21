@@ -29,6 +29,9 @@ public class IndexModel : PageModel
 
     public IReadOnlyDictionary<string, string> UserRoles { get; private set; } = new Dictionary<string, string>();
 
+    [BindProperty(SupportsGet = true)]
+    public string SearchTerm { get; set; } = string.Empty;
+
     [BindProperty]
     public CreateUserInput Input { get; set; } = new();
 
@@ -149,7 +152,18 @@ public class IndexModel : PageModel
 
     private async Task LoadUsersAsync(CancellationToken cancellationToken)
     {
-        Users = await _userManager.Users.OrderBy(user => user.DisplayName).ToListAsync(cancellationToken);
+        var usersQuery = _userManager.Users.AsNoTracking();
+        SearchTerm = SearchTerm.Trim();
+        var searchTerm = SearchTerm;
+        if (searchTerm.Length > 0)
+        {
+            usersQuery = usersQuery.Where(user =>
+                user.DisplayName.Contains(searchTerm) ||
+                user.Email!.Contains(searchTerm) ||
+                user.UserName!.Contains(searchTerm));
+        }
+
+        Users = await usersQuery.OrderBy(user => user.DisplayName).ToListAsync(cancellationToken);
         Roles = await _roleManager.Roles.OrderBy(role => role.Name).Select(role => role.Name!).ToListAsync(cancellationToken);
         var userRoles = new Dictionary<string, string>();
         foreach (var user in Users)
