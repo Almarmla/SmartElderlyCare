@@ -43,7 +43,7 @@
             <a class="dashboard-nav-link" href="#reports">
                 <span>◫</span> Reports
             </a>
-            @if (User.IsInRole(ApplicationRoles.DhioAdmin) || User.IsInRole("Administrator"))
+            @if (User.IsInRole(ApplicationRoles.Administrator) || User.IsInRole(ApplicationRoles.DhioAdmin))
             {
                 <a class="dashboard-nav-link" asp-area="Admin" asp-page="/Roles/Index">
                     <span>⚙</span> Roles
@@ -70,7 +70,7 @@
                     @ViewData["CatDate"] CAT ·
                     <span id="dashboard-live-time" aria-live="polite">--:--:--</span>
                 </p>
-                <h1>@ViewData["Greeting"], @User.Identity?.Name <span>👋</span></h1>
+                <h1>@ViewData["Greeting"], @ViewData["DisplayName"] <span>👋</span></h1>
                 <p class="dashboard-subtitle">Here is what is happening with your care team today.</p>
             </div>
             <div class="dashboard-header-actions">
@@ -80,9 +80,10 @@
                 </button>
                 <div class="user-avatar">AM</div>
                 <div class="user-details">
-                    <strong>@User.Identity?.Name</strong>
+                    <strong>@ViewData["DisplayName"]</strong>
                     <span>@ViewData["UserRole"]</span>
                 </div>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="Account" asp-action="ChangePassword">Change password</a>
             </div>
         </header>
 

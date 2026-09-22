@@ -4,27 +4,40 @@
 (() => {
     const navigationLinks = document.querySelectorAll(".dashboard-nav-link");
 
-    if (!navigationLinks.length) {
-        return;
-    }
-
     const normalizePath = (path) => path.replace(/\/+$/, "") || "/";
 
-    const updateActiveLink = () => {
-        const currentPath = normalizePath(window.location.pathname);
+    if (navigationLinks.length) {
+        const updateActiveLink = () => {
+            const currentPath = normalizePath(window.location.pathname);
 
-        navigationLinks.forEach((link) => {
-            const linkUrl = new URL(link.href, window.location.origin);
-            const isHashLink = linkUrl.pathname === currentPath && linkUrl.hash;
-            const isCurrentPage = !linkUrl.hash
-                && normalizePath(linkUrl.pathname) === currentPath;
-            const isCurrentSection = isHashLink
-                && linkUrl.hash === window.location.hash;
+            navigationLinks.forEach((link) => {
+                const linkUrl = new URL(link.href, window.location.origin);
+                const isHashLink = linkUrl.pathname === currentPath && linkUrl.hash;
+                const isCurrentPage = !linkUrl.hash
+                    && normalizePath(linkUrl.pathname) === currentPath;
+                const isCurrentSection = isHashLink
+                    && linkUrl.hash === window.location.hash;
 
-            link.classList.toggle("active", isCurrentPage || isCurrentSection);
+                link.classList.toggle("active", isCurrentPage || isCurrentSection);
+            });
+        };
+
+        updateActiveLink();
+        window.addEventListener("hashchange", updateActiveLink);
+    }
+
+    document.querySelectorAll("[data-password-toggle]").forEach((toggle) => {
+        const passwordInput = document.querySelector(toggle.dataset.passwordToggle);
+        if (!passwordInput) {
+            return;
+        }
+
+        toggle.addEventListener("click", () => {
+            const isPasswordVisible = passwordInput.type === "text";
+            passwordInput.type = isPasswordVisible ? "password" : "text";
+            toggle.classList.toggle("is-visible", !isPasswordVisible);
+            toggle.setAttribute("aria-pressed", String(!isPasswordVisible));
+            toggle.setAttribute("aria-label", isPasswordVisible ? "Show password" : "Hide password");
         });
-    };
-
-    updateActiveLink();
-    window.addEventListener("hashchange", updateActiveLink);
+    });
 })();

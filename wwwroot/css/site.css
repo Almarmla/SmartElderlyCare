@@ -379,6 +379,63 @@ body {
   background: #fff;
 }
 
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 3.25rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: .75rem;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #5b7381;
+  cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  background: #e8f6f1;
+  color: #1a7d5a;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid #4aa7a0;
+  outline-offset: 2px;
+}
+
+.eye-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.eye-off {
+  display: none;
+}
+
+.password-toggle.is-visible .eye {
+  display: none;
+}
+
+.password-toggle.is-visible .eye-off {
+  display: block;
+}
+
 .form-row {
   display: flex;
   align-items: center;

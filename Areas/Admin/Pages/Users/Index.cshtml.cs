@@ -9,7 +9,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.Users;
 
-[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin)]
+[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin + "," + ApplicationRoles.Administrator)]
 public class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
@@ -177,6 +177,34 @@ public class IndexModel : PageModel
         await _userManager.UpdateAsync(user);
         await AddAuditAsync(AdministrationAction.UserUpdated, user.Id, user.Id, "Reactivated user account.");
         await _dbContext.SaveChangesAsync(cancellationToken);
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostUnlockAsync(string id, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var resetResult = await _userManager.ResetAccessFailedCountAsync(user);
+        var lockoutResult = await _userManager.SetLockoutEndDateAsync(user, null);
+        if (!resetResult.Succeeded || !lockoutResult.Succeeded)
+        {
+            TempData["UserError"] = string.Join(
+                "; ",
+                resetResult.Errors.Concat(lockoutResult.Errors).Select(error => error.Description));
+            return RedirectToPage();
+        }
+
+        await AddAuditAsync(
+            AdministrationAction.UserUnlocked,
+            user.Id,
+            user.Id,
+            "Cleared failed login attempts and lockout end date.");
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        TempData["UserSuccess"] = $"Unlocked {user.DisplayName}.";
         return RedirectToPage();
     }
 

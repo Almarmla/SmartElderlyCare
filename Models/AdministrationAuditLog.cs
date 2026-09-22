@@ -32,6 +32,7 @@ public enum AdministrationAction
     UserCreated,
     UserUpdated,
     UserDisabled,
+    UserUnlocked,
     PasswordReset,
     RoleChanged,
     ThresholdCreated,

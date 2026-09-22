@@ -9,6 +9,7 @@ public enum ApplicationRole
     RecordsStaff,
     HiuClerk,
     DhioAdmin,
+    Administrator,
     Dmo
 }
 
@@ -21,5 +22,6 @@ public static class ApplicationRoles
     public const string RecordsStaff = nameof(ApplicationRole.RecordsStaff);
     public const string HiuClerk = nameof(ApplicationRole.HiuClerk);
     public const string DhioAdmin = nameof(ApplicationRole.DhioAdmin);
+    public const string Administrator = nameof(ApplicationRole.Administrator);
     public const string Dmo = nameof(ApplicationRole.Dmo);
 }

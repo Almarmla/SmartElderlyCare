@@ -6,6 +6,7 @@ SmartElderlyCare is an ASP.NET Core MVC web application intended to support elde
 
 - Responsive SmartElderlyCare login page.
 - Secure cookie-based administrator login.
+- Identity lockout after 5 failed attempts for 15 minutes, with an administrator-only unlock action.
 - Protected dashboard route for authenticated users.
 - EF Core entities for patients, observations, vital signs, thresholds, alerts, and monthly returns.
 - Authorised patient registration with bio-data, chronic condition, and chronic care programme enrolment.
@@ -29,6 +30,14 @@ The configured administrator account is:
 - Email: `almarmlambo@gmail.com`
 
 The password is stored as a salted PBKDF2 hash in `appsettings.json`, not as plain text. For production, move the admin configuration to user secrets or environment variables.
+
+If the configured administrator is locked out and no other administrator can sign in, run the recovery command locally on the application host:
+
+```text
+dotnet run -- --unlock-admin
+```
+
+This command is not an HTTP endpoint and only clears the failed-login count and lockout end date for the configured `AdminUser:Email`. It requires local access to the application and database; it does not bypass password verification or unlock arbitrary users.
 
 ## Technology stack
 
@@ -132,7 +141,7 @@ The patient registry supports searching by patient number, name, or condition. S
 
 ### Role workspaces and dashboard communication
 
-After sign-in, the main dashboard links to `/Workspace/Index` through **My workspace** and **Open my workspace**. The workspace resolves the signed-in role and presents only the relevant next actions:
+After sign-in, administrators open the main dashboard directly, while operational roles can use `/Workspace/Index` through **My workspace** and **Open my workspace**. The workspace resolves the signed-in role and presents only the relevant next actions:
 
 - `Nurse` / `FacilityNurse`: record a facility visit, find a patient, or register a patient.
 - `VHW`: submit a welfare check or find a patient.

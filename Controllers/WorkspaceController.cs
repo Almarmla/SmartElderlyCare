@@ -22,7 +22,9 @@ public class WorkspaceController : Controller
 
     private string ResolveRole()
     {
-        if (User.IsInRole(ApplicationRoles.DhioAdmin) || User.HasClaim(ClaimTypes.Role, "Administrator"))
+        if (User.IsInRole(ApplicationRoles.Administrator)
+            || User.IsInRole(ApplicationRoles.DhioAdmin)
+            || User.HasClaim(ClaimTypes.Role, "Administrator"))
         {
             return ApplicationRoles.DhioAdmin;
         }

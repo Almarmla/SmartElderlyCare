@@ -8,7 +8,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.Thresholds;
 
-[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin)]
+[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin + "," + ApplicationRoles.Administrator)]
 public class EditModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;

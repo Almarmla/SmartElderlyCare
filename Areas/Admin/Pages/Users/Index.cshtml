@@ -73,7 +73,14 @@
                                 <div class="col-lg-3"><label class="form-label small">Name</label><input name="displayName" value="@user.DisplayName" class="form-control form-control-sm" /></div>
                                 <div class="col-lg-3"><label class="form-label small">Email</label><input name="email" value="@user.Email" class="form-control form-control-sm" /></div>
                                 <div class="col-lg-2"><label class="form-label small">Role</label><select name="role" class="form-select form-select-sm">@foreach (var role in Model.Roles) { <option value="@role" selected="@(Model.UserRoles[user.Id] == role)">@role</option> }</select></div>
-                                <div class="col-lg-2"><span class="small text-muted d-block">Status</span><span>@(user.IsActive ? "Active" : "Inactive")</span></div>
+                                <div class="col-lg-2">
+                                    <span class="small text-muted d-block">Status</span>
+                                    <span>@(user.IsActive ? "Active" : "Inactive")</span>
+                                    @if (user.LockoutEnd is not null && user.LockoutEnd > DateTimeOffset.UtcNow)
+                                    {
+                                        <span class="badge text-bg-warning">Locked</span>
+                                    }
+                                </div>
                                 <div class="col-lg-2 d-flex gap-1"><button class="btn btn-sm btn-outline-success" type="submit">Save</button></div>
                             </form>
                             <form method="post" asp-page-handler="ResetPassword" class="row g-2 align-items-end mt-2">
@@ -85,6 +92,10 @@
                                 <div class="col-lg-3">
                                     <button class="btn btn-sm btn-outline-warning" type="submit">Reset password</button>
                                 </div>
+                            </form>
+                            <form method="post" asp-page-handler="Unlock" class="d-inline mt-2">
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <button class="btn btn-sm btn-outline-primary" type="submit">Unlock login</button>
                             </form>
                             @if (user.IsActive)
                             {
