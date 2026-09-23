@@ -19,6 +19,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<FacilityVisit> FacilityVisits => Set<FacilityVisit>();
 
+    public DbSet<PatientMedication> PatientMedications => Set<PatientMedication>();
+
     public DbSet<WelfareObservation> WelfareObservations => Set<WelfareObservation>();
 
     public DbSet<VhwWelfareCheck> VhwWelfareChecks => Set<VhwWelfareCheck>();
@@ -112,6 +114,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(reading => reading.FacilityVisits)
                 .HasForeignKey(visit => visit.VitalSignsReadingId)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        builder.Entity<PatientMedication>(entity =>
+        {
+            entity.Property(medication => medication.MedicationName).HasMaxLength(200).IsRequired();
+            entity.Property(medication => medication.Dosage).HasMaxLength(100);
+            entity.Property(medication => medication.Frequency).HasMaxLength(100);
+            entity.Property(medication => medication.Route).HasMaxLength(50);
+            entity.Property(medication => medication.Notes).HasMaxLength(1000);
+            entity.HasOne(medication => medication.Patient)
+                .WithMany(patient => patient.Medications)
+                .HasForeignKey(medication => medication.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(medication => medication.RecordedByUser)
+                .WithMany()
+                .HasForeignKey(medication => medication.RecordedByUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<WelfareObservation>(entity =>

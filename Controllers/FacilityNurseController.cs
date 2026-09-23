@@ -88,6 +88,66 @@ public class FacilityNurseController : Controller
         return RedirectToAction(nameof(RecordVisit));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Medications(int? patientId, CancellationToken cancellationToken)
+    {
+        await LoadPatientsAsync(cancellationToken);
+        ViewData["Medications"] = await LoadMedicationsAsync(patientId, cancellationToken);
+        return View(new MedicationInputModel { PatientId = patientId ?? 0 });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Medications(MedicationInputModel model, CancellationToken cancellationToken)
+    {
+        var patientExists = await _dbContext.Patients
+            .AnyAsync(patient => patient.Id == model.PatientId && patient.IsActive, cancellationToken);
+
+        if (!patientExists)
+        {
+            ModelState.AddModelError(nameof(model.PatientId), "The selected patient could not be found.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadPatientsAsync(cancellationToken);
+            ViewData["Medications"] = await LoadMedicationsAsync(model.PatientId, cancellationToken);
+            return View(model);
+        }
+
+        _dbContext.PatientMedications.Add(new PatientMedication
+        {
+            PatientId = model.PatientId,
+            RecordedByUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            MedicationName = model.MedicationName.Trim(),
+            Dosage = model.Dosage?.Trim(),
+            Frequency = model.Frequency?.Trim(),
+            Route = model.Route?.Trim(),
+            IsActive = model.IsActive,
+            Notes = model.Notes?.Trim(),
+            PrescribedAt = DateTimeOffset.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        TempData["SuccessMessage"] = "The medication was logged successfully.";
+        return RedirectToAction(nameof(Medications), new { patientId = model.PatientId });
+    }
+
+    private Task<List<PatientMedication>> LoadMedicationsAsync(int? patientId, CancellationToken cancellationToken)
+    {
+        if (!patientId.HasValue)
+        {
+            return Task.FromResult(new List<PatientMedication>());
+        }
+
+        return _dbContext.PatientMedications
+            .AsNoTracking()
+            .Where(medication => medication.PatientId == patientId.Value)
+            .OrderBy(medication => medication.IsActive ? 0 : 1)
+            .ThenByDescending(medication => medication.PrescribedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     private async Task LoadPatientsAsync(CancellationToken cancellationToken)
     {
         var patients = await _dbContext.Patients

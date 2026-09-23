@@ -1,20 +1,40 @@
 @model SmartElderlyCare.Models.PatientHistoryViewModel
+@using SmartElderlyCare.Services
 @{
     ViewData["Title"] = "Patient History";
+    var riskResult = ViewData["PatientRiskResult"] as PatientRiskResult;
+
+    var orderedReadings = Model.Readings.OrderBy(item => item.RecordedAt).ToList();
+    var bpReadings = orderedReadings
+        .Where(item => item.SystolicBloodPressure.HasValue && item.DiastolicBloodPressure.HasValue)
+        .ToList();
+    var pulseReadings = orderedReadings.Where(item => item.PulseRate.HasValue).ToList();
+    var bpLabels = bpReadings.Select(item => item.RecordedAt.ToLocalTime().ToString("dd MMM HH:mm")).ToArray();
+    var systolicValues = bpReadings.Select(item => item.SystolicBloodPressure!.Value).ToArray();
+    var diastolicValues = bpReadings.Select(item => item.DiastolicBloodPressure!.Value).ToArray();
+    var pulseLabels = pulseReadings.Select(item => item.RecordedAt.ToLocalTime().ToString("dd MMM HH:mm")).ToArray();
+    var pulseValues = pulseReadings.Select(item => item.PulseRate!.Value).ToArray();
 }
 
-<div class="container py-4">
+<div class="container py-4 patient-history-page">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
-        <div>
-            <a asp-action="Index" class="text-success">← Patient registry</a>
-            <span class="eyebrow d-block mt-3">Patient capture history</span>
+        <div class="patient-bio-data">
+            <a asp-action="Index" class="text-success print-hide">← Patient registry</a>
+            <span class="eyebrow d-block mt-3 print-hide">Patient capture history</span>
             <h1 class="mt-2 mb-1">@Model.Patient.FirstName @Model.Patient.LastName</h1>
             <p class="text-muted mb-0">@Model.Patient.PatientNumber · @Model.Patient.MedicalCondition · @Model.Patient.ChronicCareProgramme</p>
+            @if (riskResult is not null)
+            {
+                <div class="mt-2"><partial name="_RiskBadge" model="@riskResult" /></div>
+            }
         </div>
-        <a class="btn btn-outline-success" asp-action="History" asp-route-id="@Model.Patient.Id">Refresh history</a>
+        <div class="d-flex flex-wrap gap-2 print-hide">
+            <button type="button" class="btn btn-outline-success" onclick="window.print()">Print Clinical Summary</button>
+            <a class="btn btn-outline-success" asp-action="History" asp-route-id="@Model.Patient.Id">Refresh history</a>
+        </div>
     </div>
 
-    <form method="get" class="card border-0 shadow-sm p-3 mb-4">
+    <form method="get" class="card border-0 shadow-sm p-3 mb-4 print-hide">
         <input type="hidden" name="id" value="@Model.Patient.Id" />
         <div class="row g-3 align-items-end">
             <div class="col-md-4"><label for="startDate" class="form-label">From</label><input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="form-control" /></div>
@@ -23,8 +43,8 @@
         </div>
     </form>
 
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-    <div class="row g-3 mb-4">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger print-hide"></div>
+    <div class="row g-3 mb-4 print-hide">
         <div class="col-sm-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Vital readings</small><strong class="display-6">@Model.Readings.Count</strong></div></div>
         <div class="col-sm-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">VHW checks</small><strong class="display-6">@Model.WelfareChecks.Count</strong></div></div>
         <div class="col-sm-3"><div class="card border-0 shadow-sm p-3"><small class="text-muted">Facility visits</small><strong class="display-6">@Model.FacilityVisits.Count</strong></div></div>
@@ -34,6 +54,34 @@
     <div class="card border-0 shadow-sm p-4 mb-4">
         <h2 class="h5">Vital-sign trend</h2>
         <p class="text-muted">Readings in the selected period, oldest first for trend review.</p>
+        <div class="row g-4 mb-4 print-hide">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3 h-100">
+                    <h3 class="h6">Blood pressure over time</h3>
+                    @if (bpReadings.Count > 0)
+                    {
+                        <div class="chart-box"><canvas id="bpTrendChart"></canvas></div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">No blood pressure readings in the selected period.</p>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm p-3 h-100">
+                    <h3 class="h6">Pulse rate over time</h3>
+                    @if (pulseReadings.Count > 0)
+                    {
+                        <div class="chart-box"><canvas id="pulseTrendChart"></canvas></div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">No pulse readings in the selected period.</p>
+                    }
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table align-middle">
                 <thead><tr><th>Date</th><th>Blood pressure</th><th>Pulse</th><th>Temperature</th><th>Glucose</th></tr></thead>
@@ -64,3 +112,55 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            if (typeof Chart === 'undefined') {
+                return;
+            }
+
+            var bpLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(bpLabels));
+            var systolicValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(systolicValues));
+            var diastolicValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(diastolicValues));
+            var pulseLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pulseLabels));
+            var pulseValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(pulseValues));
+
+            function buildChart(canvasId, labels, datasets) {
+                var canvas = document.getElementById(canvasId);
+                if (!canvas) {
+                    return;
+                }
+
+                new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: labels, datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: {
+                            y: { beginAtZero: false },
+                            x: { ticks: { maxRotation: 45, autoSkip: true } }
+                        }
+                    }
+                });
+            }
+
+            if (bpLabels.length > 0) {
+                buildChart('bpTrendChart', bpLabels, [
+                    { label: 'Systolic (mmHg)', data: systolicValues, borderColor: '#d64545', backgroundColor: 'rgba(214, 69, 69, 0.08)', tension: 0.35, fill: true },
+                    { label: 'Diastolic (mmHg)', data: diastolicValues, borderColor: '#2b7a78', backgroundColor: 'rgba(43, 122, 120, 0.08)', tension: 0.35, fill: false }
+                ]);
+            }
+
+            if (pulseLabels.length > 0) {
+                buildChart('pulseTrendChart', pulseLabels, [
+                    { label: 'Pulse (bpm)', data: pulseValues, borderColor: '#34839b', backgroundColor: 'rgba(52, 131, 155, 0.08)', tension: 0.35, fill: true }
+                ]);
+            }
+        })();
+    </script>
+}

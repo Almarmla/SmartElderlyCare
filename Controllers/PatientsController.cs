@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartElderlyCare.Data;
 using SmartElderlyCare.Models;
+using SmartElderlyCare.Services;
 
 namespace SmartElderlyCare.Controllers;
 
@@ -11,10 +12,12 @@ namespace SmartElderlyCare.Controllers;
 public class PatientsController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IPatientRiskEvaluator _riskEvaluator;
 
-    public PatientsController(ApplicationDbContext dbContext)
+    public PatientsController(ApplicationDbContext dbContext, IPatientRiskEvaluator riskEvaluator)
     {
         _dbContext = dbContext;
+        _riskEvaluator = riskEvaluator;
     }
 
     [HttpGet]
@@ -38,6 +41,9 @@ public class PatientsController : Controller
             .ThenBy(patient => patient.FirstName)
             .ToListAsync(cancellationToken);
 
+        ViewData["PatientRiskLevels"] = await _riskEvaluator.EvaluateBatchAsync(
+            patients.Select(patient => patient.Id),
+            cancellationToken);
         ViewData["Search"] = search;
         return View(patients);
     }
@@ -105,6 +111,7 @@ public class PatientsController : Controller
                 .ToListAsync(cancellationToken)
         };
 
+        ViewData["PatientRiskResult"] = await _riskEvaluator.EvaluateAsync(id, cancellationToken);
         return View(model);
     }
 

@@ -42,6 +42,8 @@ public class Patient
 
     public ICollection<FacilityVisit> FacilityVisits { get; } = new List<FacilityVisit>();
 
+    public ICollection<PatientMedication> Medications { get; } = new List<PatientMedication>();
+
     public ICollection<WelfareObservation> WelfareObservations { get; } = new List<WelfareObservation>();
 
     public ICollection<VhwWelfareCheck> VhwWelfareChecks { get; } = new List<VhwWelfareCheck>();

@@ -88,6 +88,9 @@ public class AccountController : Controller
             return View(model);
         }
 
+        await _userManager.ResetAccessFailedCountAsync(user);
+        await _userManager.SetLockoutEndDateAsync(user, null);
+
         TempData["SuccessMessage"] = "Your password has been reset. You can now sign in.";
         return RedirectToAction(nameof(Login));
     }
@@ -293,7 +296,6 @@ public class AccountController : Controller
             user.UserName = configuredEmail;
             user.EmailConfirmed = true;
             user.IsActive = true;
-            user.PasswordHash = identityPasswordHash;
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {

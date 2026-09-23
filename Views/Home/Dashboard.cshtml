@@ -1,3 +1,4 @@
+@model DashboardStatsViewModel
 @{
     Layout = null;
     ViewData["Title"] = "Dashboard";
@@ -91,38 +92,38 @@
             <article class="stat-card stat-card-green">
                 <div class="stat-card-top">
                     <span class="stat-icon">♙</span>
-                    <span class="stat-trend">+8.2%</span>
+                    <span class="stat-trend">Live</span>
                 </div>
-                <span class="stat-label">Active residents</span>
-                <strong class="stat-value">24</strong>
-                <span class="stat-footnote">Compared with last month</span>
+                <span class="stat-label">Active patients</span>
+                <strong class="stat-value">@Model.ActivePatients</strong>
+                <span class="stat-footnote">Registered in the chronic care programme</span>
             </article>
             <article class="stat-card stat-card-blue">
                 <div class="stat-card-top">
                     <span class="stat-icon">♥</span>
-                    <span class="stat-trend">All stable</span>
+                    <span class="stat-trend">This month</span>
                 </div>
-                <span class="stat-label">Wellbeing status</span>
-                <strong class="stat-value">92%</strong>
-                <span class="stat-footnote">Residents feeling well today</span>
+                <span class="stat-label">Completed visits</span>
+                <strong class="stat-value">@Model.CompletedVisitsThisMonth</strong>
+                <span class="stat-footnote">Facility visits completed this month</span>
             </article>
             <article class="stat-card stat-card-purple">
                 <div class="stat-card-top">
                     <span class="stat-icon">▣</span>
-                    <span class="stat-trend">Today</span>
+                    <span class="stat-trend">This month</span>
                 </div>
-                <span class="stat-label">Upcoming visits</span>
-                <strong class="stat-value">08</strong>
-                <span class="stat-footnote">Across 4 care locations</span>
+                <span class="stat-label">VHW checks</span>
+                <strong class="stat-value">@Model.VhwChecksThisMonth</strong>
+                <span class="stat-footnote">Community welfare checks this month</span>
             </article>
             <article class="stat-card stat-card-orange">
                 <div class="stat-card-top">
                     <span class="stat-icon">!</span>
                     <span class="stat-trend stat-trend-alert">Needs attention</span>
                 </div>
-                <span class="stat-label">Open alerts</span>
-                <strong class="stat-value">03</strong>
-                <span class="stat-footnote">Review when you have a moment</span>
+                <span class="stat-label">Active alerts today</span>
+                <strong class="stat-value">@Model.ActiveAlertsToday</strong>
+                <span class="stat-footnote">Unresolved alerts raised today</span>
             </article>
         </section>
 

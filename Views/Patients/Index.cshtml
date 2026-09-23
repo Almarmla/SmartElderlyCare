@@ -1,6 +1,8 @@
 @model IReadOnlyList<SmartElderlyCare.Models.Patient>
+@using SmartElderlyCare.Services
 @{
     ViewData["Title"] = "Patients";
+    var riskResults = ViewData["PatientRiskLevels"] as IReadOnlyDictionary<int, PatientRiskResult>;
 }
 
 <div class="container py-4">
@@ -35,13 +37,14 @@
                         <th>Condition</th>
                         <th>Care programme</th>
                         <th>Contact</th>
+                        <th>Risk</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted py-5">No patients have been registered yet.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-5">No patients have been registered yet.</td></tr>
                 }
                 else
                 {
@@ -53,6 +56,12 @@
                             <td>@patient.MedicalCondition</td>
                             <td>@patient.ChronicCareProgramme</td>
                             <td>@(patient.PhoneNumber ?? "Not provided")</td>
+                            <td>
+                                @if (riskResults is not null && riskResults.TryGetValue(patient.Id, out var result))
+                                {
+                                    <partial name="_RiskBadge" model="@result" />
+                                }
+                            </td>
                             <td><a class="btn btn-sm btn-outline-success" asp-action="History" asp-route-id="@patient.Id">History</a></td>
                         </tr>
                     }

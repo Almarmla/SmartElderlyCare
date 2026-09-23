@@ -1684,6 +1684,30 @@ body {
   color: #277a63;
 }
 
+.risk-badge {
+  display: inline-block;
+  padding: .3em .7em;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.risk-low {
+  background: #dff3eb;
+  color: #277a63;
+}
+
+.risk-moderate {
+  background: #fff1c7;
+  color: #8b6a00;
+}
+
+.risk-high {
+  background: #f8d7da;
+  color: #9b2430;
+}
+
 @media (max-width: 640px) {
   .hiu-alert-item {
     align-items: flex-start;
@@ -1698,5 +1722,123 @@ body {
 @media (max-width: 560px) {
   .vhw-form {
     padding: 20px 16px;
+  }
+}
+
+.chart-box {
+  position: relative;
+  height: 300px;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body,
+  .app-body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+
+  header,
+  nav,
+  footer,
+  .app-navbar,
+  .app-footer {
+    display: none !important;
+  }
+
+  main,
+  .container {
+    width: 100%;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .app-body main {
+    min-height: 0 !important;
+  }
+
+  .patient-history-page {
+    padding: 0 !important;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  .patient-history-page h1 {
+    margin: 0 0 2mm !important;
+    color: #000 !important;
+    font-size: 18pt;
+  }
+
+  .patient-history-page .patient-bio-data p {
+    margin: 0 0 5mm !important;
+    color: #333 !important;
+    font-size: 10pt;
+  }
+
+  .patient-history-page .card {
+    margin-bottom: 7mm !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .patient-history-page h2,
+  .patient-history-page .card p {
+    color: #000 !important;
+  }
+
+  .patient-history-page h2 {
+    margin: 0 0 2mm !important;
+    font-size: 12pt;
+  }
+
+  .patient-history-page .table-responsive {
+    overflow: visible !important;
+  }
+
+  .patient-history-page .table {
+    width: 100%;
+    margin: 0 0 4mm;
+    border-collapse: collapse;
+    color: #000 !important;
+    font-size: 9.5pt;
+  }
+
+  .patient-history-page .table thead {
+    display: table-header-group;
+  }
+
+  .patient-history-page .table thead th {
+    background: #f2f2f2 !important;
+    border: 1px solid #bbb !important;
+    color: #000 !important;
+    font-size: 8.5pt;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .patient-history-page .table td {
+    border: 1px solid #ccc !important;
+    color: #000 !important;
+  }
+
+  .patient-history-page .table tbody tr,
+  .patient-history-page .table th,
+  .patient-history-page .table td {
+    page-break-inside: avoid;
+  }
+
+  .patient-history-page a {
+    color: #000 !important;
+    text-decoration: none;
   }
 }

@@ -39,7 +39,7 @@ public class HomeController : Controller
     }
 
     [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application")]
-    public IActionResult Dashboard()
+    public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
     {
         var catNow = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2));
         ViewData["CatDate"] = catNow.ToString("dddd, MMMM d, yyyy", CultureInfo.InvariantCulture);
@@ -53,7 +53,34 @@ public class HomeController : Controller
             ?? User.Identity?.Name
             ?? "Care team member";
 
-        return View();
+        var todayStart = new DateTimeOffset(catNow.Date, catNow.Offset);
+        var tomorrowStart = todayStart.AddDays(1);
+        var monthStart = new DateTimeOffset(new DateTime(catNow.Year, catNow.Month, 1), catNow.Offset);
+        var nextMonthStart = new DateTimeOffset(
+            catNow.Month == 12
+                ? new DateTime(catNow.Year + 1, 1, 1)
+                : new DateTime(catNow.Year, catNow.Month + 1, 1),
+            catNow.Offset);
+
+        var stats = new DashboardStatsViewModel
+        {
+            ActivePatients = await _dbContext.Patients.CountAsync(patient => patient.IsActive, cancellationToken),
+            ActiveAlertsToday = await _dbContext.Alerts.CountAsync(
+                alert => alert.Status != AlertStatus.Resolved
+                    && alert.CreatedAt >= todayStart
+                    && alert.CreatedAt < tomorrowStart,
+                cancellationToken),
+            CompletedVisitsThisMonth = await _dbContext.FacilityVisits.CountAsync(
+                visit => visit.Status == FacilityVisitStatus.Completed
+                    && visit.VisitAt >= monthStart
+                    && visit.VisitAt < nextMonthStart,
+                cancellationToken),
+            VhwChecksThisMonth = await _dbContext.VhwWelfareChecks.CountAsync(
+                check => check.ObservedAt >= monthStart && check.ObservedAt < nextMonthStart,
+                cancellationToken)
+        };
+
+        return View(stats);
     }
 
     [HttpGet]

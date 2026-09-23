@@ -21,6 +21,8 @@ public class WelfareCheckModel : PageModel
 
     public SelectList Patients { get; private set; } = null!;
 
+    public IReadOnlyList<PatientMedication> Medications { get; private set; } = new List<PatientMedication>();
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -33,6 +35,7 @@ public class WelfareCheckModel : PageModel
                 cancellationToken))
         {
             Input.PatientId = patientId.Value;
+            await LoadMedicationsAsync(patientId.Value, cancellationToken);
         }
     }
 
@@ -72,7 +75,17 @@ public class WelfareCheckModel : PageModel
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         TempData["SuccessMessage"] = "Welfare check saved.";
-        return RedirectToPage();
+        return RedirectToPage(new { patientId = Input.PatientId });
+    }
+
+    private async Task LoadMedicationsAsync(int patientId, CancellationToken cancellationToken)
+    {
+        Medications = await _dbContext.PatientMedications
+            .AsNoTracking()
+            .Where(medication => medication.PatientId == patientId)
+            .OrderBy(medication => medication.IsActive ? 0 : 1)
+            .ThenByDescending(medication => medication.PrescribedAt)
+            .ToListAsync(cancellationToken);
     }
 
     private async Task LoadPatientsAsync(CancellationToken cancellationToken)

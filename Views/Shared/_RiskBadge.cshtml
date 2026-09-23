@@ -1,0 +1,12 @@
+@using SmartElderlyCare.Services
+@model PatientRiskResult
+@{
+    var (badgeClass, label) = Model.Level switch
+    {
+        RiskLevel.High => ("risk-high", "High risk"),
+        RiskLevel.Moderate => ("risk-moderate", "Moderate risk"),
+        _ => ("risk-low", "Low risk")
+    };
+    var reasons = string.Join(" ", Model.Reasons);
+}
+<span class="risk-badge @badgeClass" title="@reasons">@label</span>

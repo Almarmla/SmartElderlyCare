@@ -41,6 +41,7 @@ builder.Services.AddAuthentication()
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<IVitalEvaluator, VitalEvaluator>();
+builder.Services.AddScoped<IPatientRiskEvaluator, PatientRiskEvaluator>();
 builder.Services.AddScoped<Dhis2MonthlyExportService>();
 
 var app = builder.Build();
@@ -179,7 +180,6 @@ static async Task SeedSuperAdminAsync(
         user.DisplayName = displayName;
         user.EmailConfirmed = true;
         user.IsActive = true;
-        user.PasswordHash = passwordHash;
 
         var emailResult = await userManager.SetEmailAsync(user, email);
         var userNameResult = await userManager.SetUserNameAsync(user, email);
