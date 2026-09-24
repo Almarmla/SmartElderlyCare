@@ -82,7 +82,21 @@ public class FacilityNurseController : Controller
 
         _dbContext.FacilityVisits.Add(visit);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        await _alertService.CheckThresholds(reading, cancellationToken);
+
+        // Gap 5 fix: alert errors are caught and logged as a non-blocking warning
+        // so a failure in alerting never crashes the nurse's successfully saved visit.
+        try
+        {
+            await _alertService.CheckThresholds(reading, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            var logger = HttpContext.RequestServices
+                .GetRequiredService<Microsoft.Extensions.Logging.ILogger<FacilityNurseController>>();
+            logger.LogError(ex, "Alert generation failed for patient {PatientId} after visit was saved.", model.PatientId);
+            TempData["WarningMessage"] = "The facility visit was saved, but alert generation encountered an error. Please notify an administrator.";
+            return RedirectToAction(nameof(RecordVisit));
+        }
 
         TempData["SuccessMessage"] = "The facility visit was recorded successfully.";
         return RedirectToAction(nameof(RecordVisit));

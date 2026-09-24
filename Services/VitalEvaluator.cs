@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SmartElderlyCare.Data;
 using SmartElderlyCare.Models;
 
@@ -12,18 +13,27 @@ public sealed class VitalEvaluator : IVitalEvaluator
         _dbContext = dbContext;
     }
 
-    public VitalStatus Evaluate(string metric, decimal value)
+    // Gap 3 fix: now async — uses FirstOrDefaultAsync to avoid thread-pool starvation.
+    // Gap 4 fix: returns VitalStatus.Warning as a safe default when no active threshold
+    //            is configured, instead of throwing and killing the entire alert batch.
+    public async Task<VitalStatus> EvaluateAsync(string metric, decimal value, CancellationToken cancellationToken = default)
     {
         if (!TryParseMetric(metric, out var parsedMetric))
         {
-            throw new ArgumentException($"Unknown vital metric '{metric}'.", nameof(metric));
+            // Unknown metric name — treat as warning so callers can still proceed.
+            return VitalStatus.Warning;
         }
 
-        var threshold = _dbContext.Thresholds
+        var threshold = await _dbContext.Thresholds
             .Where(item => item.IsActive && item.Metric == parsedMetric)
             .OrderBy(item => item.MedicalCondition == null ? 0 : 1)
-            .FirstOrDefault()
-            ?? throw new InvalidOperationException($"No active threshold exists for metric '{metric}'.");
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // Gap 4 fix: no threshold configured — return Warning instead of throwing.
+        if (threshold is null)
+        {
+            return VitalStatus.Warning;
+        }
 
         if ((threshold.CriticalLow.HasValue && value < threshold.CriticalLow.Value)
             || (threshold.CriticalHigh.HasValue && value > threshold.CriticalHigh.Value))
@@ -38,6 +48,12 @@ public sealed class VitalEvaluator : IVitalEvaluator
         }
 
         return VitalStatus.Normal;
+    }
+
+    // Keep the synchronous overload for any existing callers during transition.
+    public VitalStatus Evaluate(string metric, decimal value)
+    {
+        return EvaluateAsync(metric, value).GetAwaiter().GetResult();
     }
 
     private static bool TryParseMetric(string metric, out ThresholdMetric parsedMetric)

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using SmartElderlyCare.Data;
 using SmartElderlyCare.Models;
 using SmartElderlyCare.Services;
@@ -39,7 +40,7 @@ public sealed class AlertServiceTests
             RecordedAt = DateTimeOffset.UtcNow
         };
 
-        var service = new AlertService(context, new VitalEvaluator(context));
+        var service = new AlertService(context, new VitalEvaluator(context), NullLogger<AlertService>.Instance);
 
         var alerts = await service.CheckThresholds(reading);
 
@@ -81,7 +82,7 @@ public sealed class AlertServiceTests
             RecordedAt = DateTimeOffset.UtcNow
         };
 
-        var service = new AlertService(context, new VitalEvaluator(context));
+        var service = new AlertService(context, new VitalEvaluator(context), NullLogger<AlertService>.Instance);
 
         var alerts = await service.CheckThresholds(reading);
 
