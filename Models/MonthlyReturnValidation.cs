@@ -22,6 +22,6 @@ public class MonthlyReturnValidation
 public enum MonthlyReturnValidationStatus
 {
     Pending,
-    Valid,
+    Approved,
     Rejected
 }

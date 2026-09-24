@@ -40,4 +40,44 @@
             </div>
         }
     </div>
+
+    @if (Model.RoleName == SmartElderlyCare.Models.ApplicationRoles.Family)
+    {
+        <section class="mt-5">
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+                <div>
+                    <span class="eyebrow">Permitted care history</span>
+                    <h2 class="mt-2 mb-0">My linked relatives</h2>
+                </div>
+                <a class="btn btn-outline-success" asp-controller="Patients" asp-action="Index">Open patient registry</a>
+            </div>
+
+            @if (Model.LinkedPatients.Count == 0)
+            {
+                <div class="card border-0 shadow-sm p-4">
+                    <p class="text-muted mb-0">
+                        No relatives are linked to your account yet. Please contact the care facility so a nurse or administrator can grant you access.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var relative in Model.LinkedPatients)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <article class="card border-0 shadow-sm h-100 p-4">
+                                <h3 class="h6 mb-1">@relative.PatientName</h3>
+                                <p class="text-muted mb-3">
+                                    @relative.PatientNumber · @relative.MedicalCondition<br />
+                                    <span class="small">@(relative.Relationship ?? "Family member") · @relative.AccessLevel access</span>
+                                </p>
+                                <a class="btn btn-outline-success mt-auto" asp-controller="Patients" asp-action="History" asp-route-id="@relative.PatientId">View care history</a>
+                            </article>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    }
 </div>

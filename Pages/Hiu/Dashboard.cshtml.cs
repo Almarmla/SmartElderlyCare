@@ -7,7 +7,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Pages.Hiu;
 
-[Authorize(Roles = "HiuClerk")]
+[Authorize(Roles = "HiuClerk,RecordsStaff,DhioAdmin,Administrator")]
 public class DashboardModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;

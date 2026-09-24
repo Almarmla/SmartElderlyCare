@@ -34,6 +34,8 @@ public class MonthlySummaryModel : PageModel
 
     public IReadOnlyList<DiagnosisSummary> Diagnoses { get; private set; } = [];
 
+    public IReadOnlyList<ValidationEntry> ValidationHistory { get; private set; } = [];
+
     public string SelectedMonthName =>
         CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Month);
 
@@ -142,6 +144,83 @@ public class MonthlySummaryModel : PageModel
         return RedirectToPage(new { Year, Month });
     }
 
+    public async Task<IActionResult> OnPostApproveAsync(int year, int month, string notes)
+        => await ProcessValidationAsync(year, month, notes, MonthlyReturnValidationStatus.Approved);
+
+    public async Task<IActionResult> OnPostRejectAsync(int year, int month, string notes)
+        => await ProcessValidationAsync(year, month, notes, MonthlyReturnValidationStatus.Rejected);
+
+    private async Task<IActionResult> ProcessValidationAsync(int year, int month, string notes, MonthlyReturnValidationStatus decision)
+    {
+        Year = year;
+        Month = month;
+
+        if (!ValidatePeriod())
+        {
+            await LoadSummaryAsync(CancellationToken.None);
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            ModelState.AddModelError(string.Empty, "Validation notes are required before approving or rejecting a monthly return.");
+            await LoadSummaryAsync(CancellationToken.None);
+            return Page();
+        }
+
+        if (User?.IsInRole(ApplicationRoles.HiuClerk) != true)
+        {
+            ModelState.AddModelError(string.Empty, "Only HIU clerks can validate monthly returns.");
+            await LoadSummaryAsync(CancellationToken.None);
+            return Page();
+        }
+
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Challenge();
+        }
+
+        var monthlyReturns = await _dbContext.MonthlyReturns
+            .Where(returnItem => returnItem.Year == Year && returnItem.Month == Month)
+            .ToListAsync(CancellationToken.None);
+        if (monthlyReturns.Count == 0)
+        {
+            ModelState.AddModelError(string.Empty, "There is no monthly return for the selected period to validate.");
+            await LoadSummaryAsync(CancellationToken.None);
+            return Page();
+        }
+
+        var targetStatus = decision == MonthlyReturnValidationStatus.Approved
+            ? MonthlyReturnStatus.Approved
+            : MonthlyReturnStatus.Rejected;
+        var validatedAt = DateTimeOffset.UtcNow;
+
+        foreach (var monthlyReturn in monthlyReturns)
+        {
+            monthlyReturn.Status = targetStatus;
+            monthlyReturn.ReviewedByUserId = userId;
+            monthlyReturn.ReviewedAt = validatedAt;
+            monthlyReturn.ReviewNotes = notes;
+
+            _dbContext.MonthlyReturnValidations.Add(new MonthlyReturnValidation
+            {
+                MonthlyReturnId = monthlyReturn.Id,
+                ValidatedByUserId = userId,
+                ValidatedAt = validatedAt,
+                Status = decision,
+                Notes = notes
+            });
+        }
+
+        await _dbContext.SaveChangesAsync(CancellationToken.None);
+
+        TempData["SuccessMessage"] = decision == MonthlyReturnValidationStatus.Approved
+            ? $"Monthly return approved for {SelectedMonthName} {Year}."
+            : $"Monthly return rejected for {SelectedMonthName} {Year}.";
+        return RedirectToPage(new { Year, Month });
+    }
+
     private async Task LoadSummaryAsync(CancellationToken cancellationToken)
     {
         var visits = await LoadVisitsAsync(cancellationToken);
@@ -181,6 +260,19 @@ public class MonthlySummaryModel : PageModel
                 : statuses.Contains(MonthlyReturnStatus.Submitted)
                     ? MonthlyReturnStatus.Submitted
                     : MonthlyReturnStatus.Draft;
+
+        ValidationHistory = await _dbContext.MonthlyReturnValidations
+            .AsNoTracking()
+            .Where(validation => validation.MonthlyReturn.Year == Year && validation.MonthlyReturn.Month == Month)
+            .OrderByDescending(validation => validation.ValidatedAt)
+            .Select(validation => new ValidationEntry
+            {
+                Status = validation.Status,
+                ValidatorName = validation.ValidatedByUser.DisplayName,
+                ValidatedAt = validation.ValidatedAt,
+                Notes = validation.Notes
+            })
+            .ToListAsync(cancellationToken);
     }
 
     private async Task<List<FacilityVisit>> LoadVisitsAsync(CancellationToken cancellationToken)
@@ -236,5 +328,16 @@ public class MonthlySummaryModel : PageModel
         public string Name { get; init; } = string.Empty;
 
         public int VisitCount { get; init; }
+    }
+
+    public sealed class ValidationEntry
+    {
+        public MonthlyReturnValidationStatus Status { get; init; }
+
+        public string ValidatorName { get; init; } = string.Empty;
+
+        public DateTimeOffset ValidatedAt { get; init; }
+
+        public string? Notes { get; init; }
     }
 }

@@ -50,6 +50,51 @@
         </div>
 
         <div class="vhw-field">
+            <label asp-for="Input.Mood"></label>
+            <select asp-for="Input.Mood" class="form-select form-select-lg">
+                <option value="">Choose mood</option>
+                <option value="Good / Cheerful">Good / Cheerful</option>
+                <option value="Calm / Neutral">Calm / Neutral</option>
+                <option value="Withdrawn / Depressed">Withdrawn / Depressed</option>
+                <option value="Agitated / Distressed">Agitated / Distressed</option>
+            </select>
+            <span asp-validation-for="Input.Mood" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.Nutrition"></label>
+            <select asp-for="Input.Nutrition" class="form-select form-select-lg">
+                <option value="">Choose nutrition status</option>
+                <option value="Eating well">Eating well</option>
+                <option value="Reduced appetite">Reduced appetite</option>
+                <option value="Poor intake / Dehydrated">Poor intake / Dehydrated</option>
+            </select>
+            <span asp-validation-for="Input.Nutrition" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.SafetyConcern"></label>
+            <select asp-for="Input.SafetyConcern" class="form-select form-select-lg">
+                <option value="">No safety concern selected</option>
+                <option value="Fall risk">Fall risk</option>
+                <option value="Living alone issues">Living alone issues</option>
+                <option value="None">None</option>
+            </select>
+            <span asp-validation-for="Input.SafetyConcern" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-check-row">
+            <input asp-for="Input.FollowUpRequired" class="form-check-input" />
+            <label asp-for="Input.FollowUpRequired" class="form-check-label">Follow-up is required</label>
+        </div>
+
+        <div class="vhw-field">
+            <label asp-for="Input.FollowUpAt"></label>
+            <input asp-for="Input.FollowUpAt" type="datetime-local" class="form-control form-control-lg" />
+            <span asp-validation-for="Input.FollowUpAt" class="text-danger"></span>
+        </div>
+
+        <div class="vhw-field">
             <label asp-for="Input.Notes"></label>
             <textarea asp-for="Input.Notes" class="form-control form-control-lg" rows="4" placeholder="Write anything important..."></textarea>
             <span asp-validation-for="Input.Notes" class="text-danger"></span>

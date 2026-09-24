@@ -147,6 +147,37 @@ public class FacilityNurseController : Controller
         return RedirectToAction(nameof(Medications), new { patientId = model.PatientId });
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DiscontinueMedication(int medicationId, int patientId, CancellationToken cancellationToken)
+    {
+        var medication = await _dbContext.PatientMedications
+            .SingleOrDefaultAsync(
+                item => item.Id == medicationId && item.PatientId == patientId,
+                cancellationToken);
+
+        if (medication is null)
+        {
+            TempData["SuccessMessage"] = "The medication could not be found.";
+            return RedirectToAction(nameof(Medications), new { patientId });
+        }
+
+        var userName = User.FindFirst("DisplayName")?.Value
+            ?? User.Identity?.Name
+            ?? "Unknown user";
+
+        medication.IsActive = false;
+        medication.Notes = string.Join(
+            " ",
+            new[] { medication.Notes?.Trim() }
+                .Where(notes => !string.IsNullOrWhiteSpace(notes))
+                .Append($"Discontinued on {DateTimeOffset.UtcNow:g} by {userName}."));
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        TempData["SuccessMessage"] = $"{medication.MedicationName} was discontinued.";
+        return RedirectToAction(nameof(Medications), new { patientId });
+    }
+
     private Task<List<PatientMedication>> LoadMedicationsAsync(int? patientId, CancellationToken cancellationToken)
     {
         if (!patientId.HasValue)

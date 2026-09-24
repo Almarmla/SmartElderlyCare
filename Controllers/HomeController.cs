@@ -77,10 +77,93 @@ public class HomeController : Controller
                 cancellationToken),
             VhwChecksThisMonth = await _dbContext.VhwWelfareChecks.CountAsync(
                 check => check.ObservedAt >= monthStart && check.ObservedAt < nextMonthStart,
-                cancellationToken)
+                cancellationToken),
+            TodayActivity = await LoadTodayActivityAsync(todayStart, tomorrowStart, cancellationToken),
+            ConditionBreakdown = await LoadConditionBreakdownAsync(cancellationToken),
+            NeedsAttention = await LoadNeedsAttentionAsync(cancellationToken)
         };
 
         return View(stats);
+    }
+
+    private async Task<IReadOnlyList<TodayActivityItem>> LoadTodayActivityAsync(
+        DateTimeOffset todayStart,
+        DateTimeOffset tomorrowStart,
+        CancellationToken cancellationToken)
+    {
+        var todayVisits = await _dbContext.FacilityVisits
+            .AsNoTracking()
+            .Where(visit => visit.VisitAt >= todayStart && visit.VisitAt < tomorrowStart)
+            .OrderByDescending(visit => visit.VisitAt)
+            .Take(5)
+            .Select(visit => new TodayActivityItem
+            {
+                Type = "Facility visit",
+                PatientName = visit.Patient.FirstName + " " + visit.Patient.LastName,
+                Detail = visit.Diagnosis,
+                RecordedAt = visit.VisitAt
+            })
+            .ToListAsync(cancellationToken);
+
+        var todayChecks = await _dbContext.VhwWelfareChecks
+            .AsNoTracking()
+            .Where(check => check.ObservedAt >= todayStart && check.ObservedAt < tomorrowStart)
+            .OrderByDescending(check => check.ObservedAt)
+            .Take(5)
+            .Select(check => new TodayActivityItem
+            {
+                Type = "VHW welfare check",
+                PatientName = check.Patient.FirstName + " " + check.Patient.LastName,
+                Detail = check.Status.ToString(),
+                RecordedAt = check.ObservedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        return todayVisits
+            .Concat(todayChecks)
+            .OrderByDescending(item => item.RecordedAt)
+            .Take(6)
+            .ToList();
+    }
+
+    private async Task<IReadOnlyList<ConditionBreakdownItem>> LoadConditionBreakdownAsync(CancellationToken cancellationToken)
+    {
+        var conditionValues = await _dbContext.Patients
+            .AsNoTracking()
+            .Where(patient => patient.IsActive && !string.IsNullOrWhiteSpace(patient.MedicalCondition))
+            .Select(patient => patient.MedicalCondition!)
+            .ToListAsync(cancellationToken);
+
+        return conditionValues
+            .SelectMany(value => value.Split(
+                new[] { ',', ';', '&', '/' },
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(condition => condition.Length > 0)
+            .GroupBy(condition => condition, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new ConditionBreakdownItem { Condition = group.Key, Count = group.Count() })
+            .OrderByDescending(item => item.Count)
+            .ThenBy(item => item.Condition)
+            .Take(6)
+            .ToList();
+    }
+
+    private async Task<IReadOnlyList<AttentionItem>> LoadNeedsAttentionAsync(CancellationToken cancellationToken)
+    {
+        return await _dbContext.Alerts
+            .AsNoTracking()
+            .Where(alert => alert.Status == AlertStatus.Open)
+            .OrderByDescending(alert => alert.Severity)
+            .ThenByDescending(alert => alert.CreatedAt)
+            .Take(6)
+            .Select(alert => new AttentionItem
+            {
+                Type = alert.Type.ToString(),
+                Severity = alert.Severity.ToString(),
+                PatientName = alert.Patient.FirstName + " " + alert.Patient.LastName,
+                Message = alert.Message,
+                CreatedAt = alert.CreatedAt
+            })
+            .ToListAsync(cancellationToken);
     }
 
     [HttpGet]

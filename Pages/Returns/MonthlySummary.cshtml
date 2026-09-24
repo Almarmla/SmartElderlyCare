@@ -110,6 +110,67 @@
         </div>
     </div>
 
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5">Validation history</h2>
+            @if (Model.ValidationHistory.Count == 0)
+            {
+                <p class="text-muted mb-0">No validation decisions have been recorded for this return.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Decision</th>
+                                <th>Validated by</th>
+                                <th>Date</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var validation in Model.ValidationHistory)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge @(validation.Status switch
+                                        {
+                                            MonthlyReturnValidationStatus.Approved => "text-bg-success",
+                                            MonthlyReturnValidationStatus.Rejected => "text-bg-danger",
+                                            _ => "text-bg-secondary"
+                                        })">@validation.Status</span>
+                                </td>
+                                <td>@validation.ValidatorName</td>
+                                <td>@validation.ValidatedAt.ToString("g")</td>
+                                <td>@validation.Notes</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (User.IsInRole("HiuClerk") && Model.CurrentStatus == MonthlyReturnStatus.Submitted)
+    {
+        <div class="card border-0 shadow-sm p-3 mb-4">
+            <h2 class="h5">Validate return</h2>
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Year" />
+                <input type="hidden" asp-for="Month" />
+                <label for="ValidationNotes" class="form-label">Validation notes (required)</label>
+                <textarea id="ValidationNotes" name="notes" class="form-control mb-3" rows="3" required></textarea>
+                <div class="d-flex flex-column flex-sm-row gap-2">
+                    <button type="submit" asp-page-handler="Approve" class="btn btn-success">Approve Return</button>
+                    <button type="submit" asp-page-handler="Reject" class="btn btn-danger">Reject Return</button>
+                </div>
+            </form>
+        </div>
+    }
+
     <div class="d-flex flex-column flex-sm-row gap-2">
         <form method="post" asp-page-handler="Compile">
             @Html.AntiForgeryToken()

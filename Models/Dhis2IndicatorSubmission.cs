@@ -24,6 +24,8 @@ public class Dhis2IndicatorSubmission
 
     public Dhis2SubmissionStatus Status { get; set; } = Dhis2SubmissionStatus.Pending;
 
+    public DateTimeOffset? SubmittedAt { get; set; }
+
     public string? Dhis2ResponseId { get; set; }
 
     public string? ErrorMessage { get; set; }

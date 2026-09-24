@@ -1,0 +1,106 @@
+@model SmartElderlyCare.Models.FamilyLinkPageViewModel
+@{
+    ViewData["Title"] = "Link Family Members";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <a asp-action="Index" class="text-success">← Patient registry</a>
+            <span class="eyebrow d-block mt-3">Family access</span>
+            <h1 class="mt-3 mb-1">Link family members to patients</h1>
+            <p class="text-muted mb-0">Grant a registered family account view or contribute access to a patient's care history.</p>
+        </div>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    @if (TempData["FamilyLinkMessage"] is string familyLinkMessage)
+    {
+        <div class="alert alert-success">@familyLinkMessage</div>
+    }
+
+    <div class="card border-0 shadow-sm p-4 mb-4">
+        <h2 class="h5">Add a family link</h2>
+        <form method="post" asp-action="LinkFamilyMember" class="row g-3">
+            <div class="col-md-4">
+                <label asp-for="Input.PatientId" class="form-label"></label>
+                <select asp-for="Input.PatientId" class="form-select">
+                    <option value="">Select a patient…</option>
+                    @foreach (var patient in Model.Patients)
+                    {
+                        <option value="@patient.Id">@patient.LastName, @patient.FirstName (@patient.PatientNumber)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Input.FamilyMemberUserId" class="form-label"></label>
+                <select asp-for="Input.FamilyMemberUserId" class="form-select">
+                    <option value="">Select a registered family member…</option>
+                    @foreach (var user in Model.FamilyMembers)
+                    {
+                        <option value="@user.Id">@user.DisplayName (@user.Email)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Input.AccessLevel" class="form-label"></label>
+                <select asp-for="Input.AccessLevel" class="form-select">
+                    @foreach (var level in Enum.GetValues<SmartElderlyCare.Models.FamilyAccessLevel>())
+                    {
+                        <option value="@level">@level</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label asp-for="Input.RelationshipToPatient" class="form-label"></label>
+                <input asp-for="Input.RelationshipToPatient" class="form-control" placeholder="e.g. Daughter" />
+            </div>
+            <div class="col-12">
+                <button class="btn primary-button px-4" type="submit">Link family member</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4">
+        <h2 class="h5 mb-3">Existing family links</h2>
+        @if (Model.ExistingLinks.Count == 0)
+        {
+            <p class="text-muted mb-0">No family links have been created yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Patient</th><th>Family member</th><th>Relationship</th><th>Access</th><th>Added</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach (var link in Model.ExistingLinks)
+                    {
+                        <tr>
+                            <td>@link.Patient.FirstName @link.Patient.LastName<br /><small class="text-muted">@link.Patient.PatientNumber</small></td>
+                            <td>@link.FamilyMemberUser.DisplayName<br /><small class="text-muted">@link.FamilyMemberUser.Email</small></td>
+                            <td>@(link.RelationshipToPatient ?? "—")</td>
+                            <td>@link.AccessLevel</td>
+                            <td>@link.AddedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                            <td>@(link.IsActive ? "Active" : "Revoked")</td>
+                            <td>
+                                @if (link.IsActive)
+                                {
+                                    <form method="post" asp-action="RevokeFamilyLink">
+                                        <input type="hidden" name="patientId" value="@link.PatientId" />
+                                        <input type="hidden" name="familyMemberUserId" value="@link.FamilyMemberUserId" />
+                                        <button class="btn btn-sm btn-outline-danger" type="submit">Revoke</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Revoked</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

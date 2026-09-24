@@ -35,13 +35,10 @@
             <a class="dashboard-nav-link" asp-controller="Patients" asp-action="Index">
                 <span>♙</span> Residents
             </a>
-            <a class="dashboard-nav-link" href="#schedule">
-                <span>▣</span> Schedule
+            <a class="dashboard-nav-link" asp-page="/Returns/MonthlySummary">
+                <span>▣</span> Monthly Returns
             </a>
-            <a class="dashboard-nav-link" href="#messages">
-                <span>✉</span> Messages
-            </a>
-            <a class="dashboard-nav-link" href="#reports">
+            <a class="dashboard-nav-link" asp-page="/Hiu/MonthlyReport">
                 <span>◫</span> Reports
             </a>
             @if (User.IsInRole(ApplicationRoles.Administrator) || User.IsInRole(ApplicationRoles.DhioAdmin))
@@ -145,67 +142,60 @@
             <article class="dashboard-card wellbeing-card" id="residents">
                 <div class="card-heading">
                     <div>
-                        <h2>Residents wellbeing</h2>
-                        <p>Weekly overview of resident check-ins</p>
+                        <h2>Patient conditions</h2>
+                        <p>Active residents by chronic condition</p>
                     </div>
-                    <button class="card-link" type="button">View all <span>→</span></button>
+                    <a class="card-link" asp-controller="Patients" asp-action="Index">View residents <span>→</span></a>
                 </div>
-                <div class="wellbeing-chart" aria-label="Wellbeing chart">
-                    <div class="chart-y-axis"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
-                    <div class="chart-area">
-                        <div class="chart-grid-lines"><i></i><i></i><i></i><i></i><i></i></div>
-                        <svg class="chart-line" viewBox="0 0 640 190" role="img" aria-label="Wellbeing increased to 92 percent">
-                            <defs>
-                                <linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stop-color="#55b7a4" stop-opacity=".28" />
-                                    <stop offset="100%" stop-color="#55b7a4" stop-opacity="0" />
-                                </linearGradient>
-                            </defs>
-                            <path class="chart-fill" d="M0,130 C50,122 60,145 105,118 S165,96 210,112 S260,82 310,93 S362,108 410,75 S470,86 510,64 S570,45 640,51 L640,190 L0,190 Z" />
-                            <path class="chart-stroke" d="M0,130 C50,122 60,145 105,118 S165,96 210,112 S260,82 310,93 S362,108 410,75 S470,86 510,64 S570,45 640,51" />
-                            <circle cx="640" cy="51" r="6" class="chart-point" />
-                        </svg>
-                        <div class="chart-x-axis"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+                @if (Model.ConditionBreakdown.Count == 0)
+                {
+                    <p class="text-muted mb-0">No conditions have been recorded yet.</p>
+                }
+                else
+                {
+                    var conditionMax = Model.ConditionBreakdown.Max(item => item.Count);
+                    <div class="condition-list">
+                        @foreach (var condition in Model.ConditionBreakdown)
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="condition-name">@condition.Condition</span>
+                                    <strong>@condition.Count</strong>
+                                </div>
+                                <div class="progress" role="progressbar" aria-valuenow="@condition.Count" aria-valuemin="0" aria-valuemax="@conditionMax" style="height: 10px;">
+                                    <div class="progress-bar" style="width: @(condition.Count * 100 / Math.Max(conditionMax, 1))%"></div>
+                                </div>
+                            </div>
+                        }
                     </div>
-                </div>
-                <div class="chart-summary">
-                    <span class="summary-dot"></span>
-                    <span>Overall wellbeing</span>
-                    <strong>92%</strong>
-                    <span class="summary-change">↑ 4.6% this week</span>
-                </div>
+                }
             </article>
 
-            <article class="dashboard-card schedule-card" id="schedule">
+            <article class="dashboard-card schedule-card" id="activity">
                 <div class="card-heading">
                     <div>
-                        <h2>Today's schedule</h2>
+                        <h2>Today's activity</h2>
                         <p>@ViewData["CatDate"]</p>
                     </div>
-                    <button class="card-link" type="button">Full calendar <span>→</span></button>
+                    <a class="card-link" asp-page="/Returns/MonthlySummary">View returns <span>→</span></a>
                 </div>
-                <div class="schedule-list">
-                    <div class="schedule-item">
-                        <time>09:00</time>
-                        <span class="schedule-line schedule-line-green"></span>
-                        <div><strong>Morning check-in</strong><span>Mrs. Eleanor James · Room 204</span></div>
+                @if (Model.TodayActivity.Count == 0)
+                {
+                    <p class="text-muted mb-0">No facility visits or welfare checks have been recorded today yet.</p>
+                }
+                else
+                {
+                    <div class="schedule-list">
+                        @foreach (var activity in Model.TodayActivity)
+                        {
+                            <div class="schedule-item">
+                                <time>@activity.RecordedAt.ToLocalTime().ToString("HH:mm")</time>
+                                <span class="schedule-line schedule-line-@(activity.Type == "Facility visit" ? "green" : "blue")"></span>
+                                <div><strong>@activity.Type</strong><span>@activity.PatientName · @activity.Detail</span></div>
+                            </div>
+                        }
                     </div>
-                    <div class="schedule-item">
-                        <time>11:30</time>
-                        <span class="schedule-line schedule-line-blue"></span>
-                        <div><strong>Physiotherapy session</strong><span>Mr. Robert Wilson · Therapy room</span></div>
-                    </div>
-                    <div class="schedule-item">
-                        <time>14:00</time>
-                        <span class="schedule-line schedule-line-purple"></span>
-                        <div><strong>Family care meeting</strong><span>Video call · The Thompson family</span></div>
-                    </div>
-                    <div class="schedule-item">
-                        <time>16:30</time>
-                        <span class="schedule-line schedule-line-orange"></span>
-                        <div><strong>Medication review</strong><span>Mrs. Margaret Lee · Room 108</span></div>
-                    </div>
-                </div>
+                }
             </article>
         </section>
 
@@ -214,26 +204,29 @@
                 <div class="card-heading">
                     <div>
                         <h2>Needs your attention</h2>
-                        <p>Review these updates from your team</p>
+                        <p>Recent unresolved alerts from your team</p>
                     </div>
-                    <span class="alert-count">3 new</span>
+                    <span class="alert-count">@Model.NeedsAttention.Count open</span>
                 </div>
                 <div class="alert-list">
-                    <div class="alert-item alert-item-warning">
-                        <span class="alert-icon">!</span>
-                        <div><strong>Missed check-in</strong><span>David Brown has not checked in since 08:30.</span></div>
-                        <button type="button" aria-label="Open missed check-in">→</button>
-                    </div>
-                    <div class="alert-item alert-item-info">
-                        <span class="alert-icon">i</span>
-                        <div><strong>New care note added</strong><span>Sarah Patel's daughter left a note for the team.</span></div>
-                        <button type="button" aria-label="Open care note">→</button>
-                    </div>
-                    <div class="alert-item alert-item-success">
-                        <span class="alert-icon">✓</span>
-                        <div><strong>Medication completed</strong><span>All morning medication rounds are complete.</span></div>
-                        <button type="button" aria-label="Open medication update">→</button>
-                    </div>
+                    @if (Model.NeedsAttention.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Nothing needs your attention right now.</p>
+                    }
+                    else
+                    {
+                        @foreach (var attention in Model.NeedsAttention)
+                        {
+                            <div class="alert-item alert-item-@(attention.Severity == "Critical" || attention.Severity == "High" ? "warning" : "info")">
+                                <span class="alert-icon">!</span>
+                                <div>
+                                    <strong>@attention.Type</strong>
+                                    <span>@attention.PatientName · @attention.Message</span>
+                                </div>
+                                <time class="text-muted small">@attention.CreatedAt.ToLocalTime().ToString("HH:mm")</time>
+                            </div>
+                        }
+                    }
                 </div>
             </article>
 
@@ -247,8 +240,8 @@
                 <div class="quick-actions">
                     <a asp-controller="Workspace" asp-action="Index"><span class="quick-action-icon quick-action-blue">◇</span><span><strong>Open my workspace</strong><small>See actions for your role</small></span><b>→</b></a>
                     <a asp-controller="Patients" asp-action="Register"><span class="quick-action-icon quick-action-green">+</span><span><strong>Add a resident</strong><small>Create a new care profile</small></span><b>→</b></a>
-                    <a href="#message-team"><span class="quick-action-icon quick-action-blue">✉</span><span><strong>Message the team</strong><small>Share an update or question</small></span><b>→</b></a>
-                    <a href="#report"><span class="quick-action-icon quick-action-purple">▥</span><span><strong>Generate a report</strong><small>Export a care summary</small></span><b>→</b></a>
+                    <a asp-page="/Returns/MonthlySummary"><span class="quick-action-icon quick-action-blue">▣</span><span><strong>Monthly returns</strong><small>Compile the facility's monthly report</small></span><b>→</b></a>
+                    <a asp-page="/Hiu/MonthlyReport"><span class="quick-action-icon quick-action-purple">▥</span><span><strong>Generate a report</strong><small>Export the DHIS2 monthly indicators</small></span><b>→</b></a>
                 </div>
             </article>
         </section>
