@@ -17,4 +17,6 @@ public class PatientHistoryViewModel
     public IReadOnlyList<FacilityVisit> FacilityVisits { get; set; } = [];
 
     public IReadOnlyList<Alert> Alerts { get; set; } = [];
+
+    public IReadOnlyList<PatientMedication> Medications { get; set; } = [];
 }

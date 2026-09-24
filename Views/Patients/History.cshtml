@@ -111,6 +111,19 @@
             </table>
         </div>
     </div>
+
+    <div class="card border-0 shadow-sm p-4 mb-4">
+        <h2 class="h5">Active medications</h2>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th>Name</th><th>Dosage</th><th>Frequency</th><th>Route</th><th>Prescribed</th></tr></thead>
+                <tbody>
+                @foreach (var medication in Model.Medications) { <tr><td>@medication.MedicationName</td><td>@(medication.Dosage ?? "—")</td><td>@(medication.Frequency ?? "—")</td><td>@(medication.Route ?? "—")</td><td>@medication.PrescribedAt.ToLocalTime().ToString("dd MMM yyyy")</td></tr> }
+                @if (Model.Medications.Count == 0) { <tr><td colspan="5" class="text-muted">No active medications recorded.</td></tr> }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

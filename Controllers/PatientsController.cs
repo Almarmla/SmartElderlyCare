@@ -108,6 +108,11 @@ public class PatientsController : Controller
                 .AsNoTracking()
                 .Where(alert => alert.PatientId == id && alert.CreatedAt >= startOffset && alert.CreatedAt < endOffset)
                 .OrderByDescending(alert => alert.CreatedAt)
+                .ToListAsync(cancellationToken),
+            Medications = await _dbContext.PatientMedications
+                .AsNoTracking()
+                .Where(medication => medication.PatientId == id && medication.IsActive)
+                .OrderByDescending(medication => medication.PrescribedAt)
                 .ToListAsync(cancellationToken)
         };
 

@@ -123,19 +123,21 @@ public sealed class PatientRiskEvaluator : IPatientRiskEvaluator
 
     private static RiskLevel EvaluateAlerts(IReadOnlyList<Alert> alerts, List<string> reasons)
     {
+        if (alerts.Count == 0)
+        {
+            return RiskLevel.Low;
+        }
+
         if (alerts.Any(alert => alert.Severity == AlertSeverity.Critical || alert.Severity == AlertSeverity.High))
         {
             reasons.Add("Unresolved high-severity alert(s).");
-            return RiskLevel.High;
         }
-
-        if (alerts.Count > 0)
+        else
         {
             reasons.Add("Unresolved alert(s).");
-            return RiskLevel.Moderate;
         }
 
-        return RiskLevel.Low;
+        return RiskLevel.High;
     }
 
     private static RiskLevel EvaluateWelfare(IReadOnlyList<VhwWelfareCheck> welfareChecks, List<string> reasons)
@@ -162,7 +164,7 @@ public sealed class PatientRiskEvaluator : IPatientRiskEvaluator
 
     private static bool IsSevereHypertension(VitalSignsReading reading)
     {
-        return (reading.SystolicBloodPressure.HasValue && reading.SystolicBloodPressure.Value >= 180)
+        return (reading.SystolicBloodPressure.HasValue && reading.SystolicBloodPressure.Value >= 160)
             || (reading.DiastolicBloodPressure.HasValue && reading.DiastolicBloodPressure.Value >= 120);
     }
 
