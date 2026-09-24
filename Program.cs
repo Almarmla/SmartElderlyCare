@@ -43,6 +43,7 @@ builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<IVitalEvaluator, VitalEvaluator>();
 builder.Services.AddScoped<IPatientRiskEvaluator, PatientRiskEvaluator>();
 builder.Services.AddScoped<Dhis2MonthlyExportService>();
+builder.Services.AddScoped<IDistrictReportService, DistrictReportService>();
 
 var app = builder.Build();
 

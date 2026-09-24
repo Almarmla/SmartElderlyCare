@@ -135,6 +135,7 @@ public class WorkspaceController : Controller
             ],
             ApplicationRoles.Dmo =>
             [
+                new("District Aggregate Dashboard", "Review high-level care indicators, facility volume, and morbidity.", "", Page: "/Reports/DistrictSummary", Style: "blue"),
                 new("Monthly DHIS2 report", "Review the monthly indicator export prepared for district reporting.", "", Page: "/Hiu/MonthlyReport", Style: "purple")
             ],
             _ =>

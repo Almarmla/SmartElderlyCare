@@ -201,6 +201,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(report => report.DistrictCode).HasMaxLength(50).IsRequired();
             entity.Property(report => report.DistrictName).HasMaxLength(200).IsRequired();
             entity.Property(report => report.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(report => report.MorbiditySummary).HasMaxLength(4000);
             entity.HasIndex(report => new
             {
                 report.DistrictCode,

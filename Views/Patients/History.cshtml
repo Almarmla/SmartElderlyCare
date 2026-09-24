@@ -30,6 +30,12 @@
         </div>
         <div class="d-flex flex-wrap gap-2 print-hide">
             <button type="button" class="btn btn-outline-success" onclick="window.print()">Print Clinical Summary</button>
+            @if (User.IsInRole(ApplicationRoles.Nurse)
+                || User.IsInRole(ApplicationRoles.FacilityNurse)
+                || User.IsInRole(ApplicationRoles.DhioAdmin))
+            {
+                <a class="btn btn-outline-success" asp-action="Edit" asp-route-id="@Model.Patient.Id">Edit Patient</a>
+            }
             <a class="btn btn-outline-success" asp-action="History" asp-route-id="@Model.Patient.Id">Refresh history</a>
         </div>
     </div>

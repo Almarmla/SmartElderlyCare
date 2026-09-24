@@ -1,0 +1,168 @@
+@page
+@model SmartElderlyCare.Pages.Reports.DistrictSummaryModel
+@{
+    ViewData["Title"] = "District Summary";
+}
+
+<div class="container py-4">
+    <div class="mb-4">
+        <span class="eyebrow">DMO reporting</span>
+        <h1 class="mt-3 mb-1">District summary</h1>
+        <p class="text-muted">High-level care indicators, facility volume, and morbidity for the selected month.</p>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
+
+    <form method="get" class="card border-0 shadow-sm p-4 mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3"><label asp-for="Year" class="form-label"></label><input asp-for="Year" class="form-control" /></div>
+            <div class="col-md-3"><label asp-for="Month" class="form-label"></label><select asp-for="Month" class="form-select">@for (var month = 1; month <= 12; month++) { <option value="@month">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(month)</option> }</select></div>
+            <div class="col-md-3"><label asp-for="DistrictCode" class="form-label"></label><input asp-for="DistrictCode" class="form-control" /></div>
+            <div class="col-md-3"><label asp-for="DistrictName" class="form-label"></label><input asp-for="DistrictName" class="form-control" /></div>
+            <div class="col-12 d-flex gap-2">
+                <button class="btn primary-button px-4" type="submit">View</button>
+            </div>
+        </div>
+    </form>
+
+    <section class="dashboard-stats mb-4" aria-label="District indicators">
+        <article class="stat-card stat-card-green">
+            <div class="stat-card-top"><span class="stat-icon">♙</span><span class="stat-trend">@Model.SelectedPeriodLabel</span></div>
+            <span class="stat-label">Total patients enrolled</span>
+            <strong class="stat-value">@(Model.CurrentReport?.ActivePatients ?? Model.LivePatients)</strong>
+            <span class="stat-footnote">Active patients in the chronic care programme</span>
+        </article>
+        <article class="stat-card stat-card-blue">
+            <div class="stat-card-top"><span class="stat-icon">♥</span><span class="stat-trend">@Model.SelectedPeriodLabel</span></div>
+            <span class="stat-label">Completed facility visits</span>
+            <strong class="stat-value">@(Model.CurrentReport?.VisitsCompleted ?? Model.LiveVisitsCompleted)</strong>
+            <span class="stat-footnote">Facility visits completed this month</span>
+        </article>
+        <article class="stat-card stat-card-purple">
+            <div class="stat-card-top"><span class="stat-icon">▣</span><span class="stat-trend">@Model.SelectedPeriodLabel</span></div>
+            <span class="stat-label">VHW welfare checks</span>
+            <strong class="stat-value">@(Model.CurrentReport?.WelfareChecksCompleted ?? Model.LiveWelfareChecks)</strong>
+            <span class="stat-footnote">Community welfare checks this month</span>
+        </article>
+        <article class="stat-card stat-card-orange">
+            <div class="stat-card-top"><span class="stat-icon">!</span><span class="stat-trend stat-trend-alert">Live</span></div>
+            <span class="stat-label">Critical & high alerts</span>
+            <strong class="stat-value">@Model.LiveHighPriorityAlerts</strong>
+            <span class="stat-footnote">Critical or high severity alerts raised this month</span>
+        </article>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <section class="card border-0 shadow-sm p-4 h-100">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+                    <div>
+                        <h2 class="h5 mb-0">Morbidity breakdown</h2>
+                        <span class="small text-muted">Diagnoses recorded on completed facility visits</span>
+                    </div>
+                    @if (Model.CurrentReport is not null)
+                    {
+                        <span class="badge text-bg-success">Published @Model.CurrentReport.GeneratedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                    }
+                </div>
+                @if (Model.Morbidity.Count == 0)
+                {
+                    <p class="text-muted mb-0">No completed visits with diagnoses recorded for this period.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead><tr><th>Diagnosis</th><th class="text-end">Cases</th></tr></thead>
+                            <tbody>
+                            @foreach (var item in Model.Morbidity)
+                            {
+                                <tr><td>@item.Diagnosis</td><td class="text-end fw-semibold">@item.Cases</td></tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
+        </div>
+        <div class="col-lg-5">
+            <section class="card border-0 shadow-sm p-4 h-100">
+                <h2 class="h5 mb-3">Published reports</h2>
+                @if (Model.CurrentReport is not null)
+                {
+                    <p class="small text-muted mb-2">
+                        Current report for <strong>@Model.CurrentReport.DistrictName</strong> (@Model.CurrentReport.DistrictCode),
+                        month <strong>@Model.SelectedPeriodLabel</strong>,
+                        generated @Model.CurrentReport.GeneratedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm").
+                    </p>
+                }
+                else
+                {
+                    <p class="small text-muted mb-2">
+                        No published report for <strong>@Model.DistrictName</strong> (@Model.DistrictCode) in <strong>@Model.SelectedPeriodLabel</strong>.
+                        The figures above are live totals for the selected period.
+                    </p>
+                }
+                @if (Model.CanPublish)
+                {
+                    <form method="post" asp-page-handler="Publish" class="mt-2">
+                        <input type="hidden" name="year" value="@Model.Year" />
+                        <input type="hidden" name="month" value="@Model.Month" />
+                        <input type="hidden" name="districtCode" value="@Model.DistrictCode" />
+                        <input type="hidden" name="districtName" value="@Model.DistrictName" />
+                        <button class="btn primary-button w-100" type="submit">
+                            @(Model.CurrentReport is null ? "Publish Report" : "Refresh Report")
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">Publishing is available to DMO and DHIO administrator accounts.</p>
+                }
+            </section>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4 mt-4">
+        <div class="mb-3">
+            <h2 class="h5 mb-0">Past published district reports</h2>
+            <span class="small text-muted">Reports published across all districts</span>
+        </div>
+        @if (Model.PastReports.Count == 0)
+        {
+            <p class="text-muted mb-0">No district reports have been published yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                    <tr><th>District</th><th>Period</th><th>Patients</th><th>Visits</th><th>Welfare</th><th>Alerts</th><th>Generated</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var report in Model.PastReports)
+                    {
+                        <tr>
+                            <td>
+                                @report.DistrictName
+                                <span class="text-muted small">· @report.DistrictCode</span>
+                            </td>
+                            <td class="text-nowrap">@($"{report.ReportingMonth:00}/{report.ReportingYear}")</td>
+                            <td>@report.ActivePatients</td>
+                            <td>@report.VisitsCompleted</td>
+                            <td>@report.WelfareChecksCompleted</td>
+                            <td>@report.AlertsRaised</td>
+                            <td class="text-nowrap">@report.GeneratedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                            <td><span class="badge text-bg-success">@report.Status</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

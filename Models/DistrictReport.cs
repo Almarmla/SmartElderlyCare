@@ -24,6 +24,8 @@ public class DistrictReport
 
     public int AlertsResolved { get; set; }
 
+    public string? MorbiditySummary { get; set; }
+
     public DateTimeOffset GeneratedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public string GeneratedByUserId { get; set; } = string.Empty;

@@ -18,6 +18,12 @@ public class PatientsController : Controller
         ApplicationRoles.DhioAdmin + "," +
         ApplicationRoles.Administrator;
 
+    private const string AllowedStaffRoles =
+        ApplicationRoles.Nurse + "," +
+        ApplicationRoles.FacilityNurse + "," +
+        ApplicationRoles.DhioAdmin + "," +
+        ApplicationRoles.Administrator;
+
     private readonly ApplicationDbContext _dbContext;
     private readonly IPatientRiskEvaluator _riskEvaluator;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -219,6 +225,100 @@ public class PatientsController : Controller
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         TempData["SuccessMessage"] = $"{patient.FirstName} {patient.LastName} was registered successfully.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [Authorize(Roles = AllowedStaffRoles)]
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    {
+        var patient = await _dbContext.Patients
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == id && item.IsActive, cancellationToken);
+        if (patient is null)
+        {
+            return NotFound();
+        }
+
+        var model = new PatientEditInputModel
+        {
+            Id = patient.Id,
+            FirstName = patient.FirstName,
+            LastName = patient.LastName,
+            DateOfBirth = patient.DateOfBirth,
+            Sex = patient.Sex,
+            NationalId = patient.NationalId,
+            MedicalCondition = patient.MedicalCondition ?? string.Empty,
+            ChronicCareProgramme = patient.ChronicCareProgramme ?? string.Empty,
+            PhoneNumber = patient.PhoneNumber,
+            Address = patient.Address,
+            EmergencyContactName = patient.EmergencyContactName ?? string.Empty,
+            EmergencyContactPhone = patient.EmergencyContactPhone ?? string.Empty,
+            IsActive = patient.IsActive
+        };
+
+        return View(model);
+    }
+
+    [Authorize(Roles = AllowedStaffRoles)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(PatientEditInputModel model, CancellationToken cancellationToken)
+    {
+        if (model.DateOfBirth > DateOnly.FromDateTime(DateTime.Today))
+        {
+            ModelState.AddModelError(nameof(model.DateOfBirth), "Date of birth cannot be in the future.");
+        }
+
+        var patient = await _dbContext.Patients
+            .SingleOrDefaultAsync(item => item.Id == model.Id, cancellationToken);
+        if (patient is null)
+        {
+            return NotFound();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        patient.FirstName = model.FirstName.Trim();
+        patient.LastName = model.LastName.Trim();
+        patient.DateOfBirth = model.DateOfBirth;
+        patient.Sex = string.IsNullOrWhiteSpace(model.Sex) ? null : model.Sex.Trim();
+        patient.NationalId = model.NationalId?.Trim();
+        patient.MedicalCondition = model.MedicalCondition.Trim();
+        patient.ChronicCareProgramme = model.ChronicCareProgramme.Trim();
+        patient.PhoneNumber = model.PhoneNumber?.Trim();
+        patient.Address = model.Address?.Trim();
+        patient.EmergencyContactName = model.EmergencyContactName.Trim();
+        patient.EmergencyContactPhone = model.EmergencyContactPhone.Trim();
+        patient.IsActive = model.IsActive;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        TempData["SuccessMessage"] = "Patient details updated successfully.";
+        return RedirectToAction(nameof(History), new { id = patient.Id });
+    }
+
+    [Authorize(Roles = AllowedStaffRoles)]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(int id, CancellationToken cancellationToken)
+    {
+        var patient = await _dbContext.Patients
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (patient is null)
+        {
+            return NotFound();
+        }
+
+        patient.IsActive = !patient.IsActive;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        TempData["SuccessMessage"] = patient.IsActive
+            ? $"{patient.FirstName} {patient.LastName} was re-activated."
+            : $"{patient.FirstName} {patient.LastName} was archived.";
         return RedirectToAction(nameof(Index));
     }
 

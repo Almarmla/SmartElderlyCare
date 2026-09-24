@@ -73,6 +73,13 @@
                                 </li>
                             }
 
+                            @if (User.IsInRole(ApplicationRoles.Dmo))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Reports/DistrictSummary">District Reports</a>
+                                </li>
+                            }
+
                             @if (User.IsInRole(ApplicationRoles.DhioAdmin) || User.IsInRole(ApplicationRoles.Administrator))
                             {
                                 <li class="nav-item dropdown">
