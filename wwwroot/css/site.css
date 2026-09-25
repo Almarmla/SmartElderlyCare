@@ -24,6 +24,9 @@ body {
 }
 
 .app-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #f5f9fa;
   color: #203d49;
 }
@@ -81,8 +84,8 @@ body {
   font-weight: 800;
 }
 
-.app-body main {
-  min-height: calc(100vh - 150px);
+.app-body > .container {
+  flex: 1;
 }
 
 .app-body h1,
@@ -177,6 +180,7 @@ body {
 }
 
 .app-footer {
+  flex-shrink: 0;
   background: #edf5f6;
   color: #6b858e !important;
   padding: 20px 0;
