@@ -110,9 +110,8 @@
                 <tbody>
                 @foreach (var visit in Model.FacilityVisits) { <tr><td>@visit.VisitAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td><td>Facility visit</td><td>@visit.Diagnosis — @visit.Treatment</td><td colspan="3"></td></tr> }
                 @foreach (var check in Model.WelfareChecks) { <tr><td>@check.ObservedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td><td>VHW welfare check</td><td>@check.Status: @(check.Notes ?? "No notes")</td><td>@(check.Mood ?? "—")</td><td>@(check.Nutrition ?? "—")</td><td>@(check.FollowUpAt.HasValue ? check.FollowUpAt.Value.ToLocalTime().ToString("dd MMM yyyy HH:mm") : "—")</td></tr> }
-                @foreach (var observation in Model.WelfareObservations) { <tr><td>@observation.ObservedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td><td>Welfare observation</td><td>@observation.Status</td><td colspan="3"></td></tr> }
                 @foreach (var alert in Model.Alerts) { <tr><td>@alert.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td><td>Alert (@alert.Severity)</td><td>@alert.Message</td><td colspan="3"></td></tr> }
-                @if (Model.FacilityVisits.Count + Model.WelfareChecks.Count + Model.WelfareObservations.Count + Model.Alerts.Count == 0) { <tr><td colspan="6" class="text-muted">No other captures in this period.</td></tr> }
+                @if (Model.FacilityVisits.Count + Model.WelfareChecks.Count + Model.Alerts.Count == 0) { <tr><td colspan="6" class="text-muted">No other captures in this period.</td></tr> }
                 </tbody>
             </table>
         </div>

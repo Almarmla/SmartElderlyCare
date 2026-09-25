@@ -6,7 +6,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.Roles;
 
-[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application", Roles = ApplicationRoles.DhioAdmin + "," + ApplicationRoles.Administrator)]
+[Authorize(Roles = ApplicationRoles.DhioAdmin + "," + ApplicationRoles.Administrator)]
 public class IndexModel : PageModel
 {
     private readonly RoleManager<IdentityRole> _roleManager;

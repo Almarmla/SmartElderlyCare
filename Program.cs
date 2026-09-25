@@ -28,16 +28,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
 });
-builder.Services.AddAuthentication()
-    .AddCookie("AdminCookie", options =>
-    {
-        options.LoginPath = "/Home/Login";
-        options.AccessDeniedPath = "/Home/Login";
-        options.Cookie.Name = "SmartElderlyCare.Admin";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
-    });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<IVitalEvaluator, VitalEvaluator>();

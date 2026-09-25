@@ -29,7 +29,9 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction("Index", "Workspace");
+            var isAdministrator = User.IsInRole(ApplicationRoles.Administrator)
+                || User.IsInRole(ApplicationRoles.DhioAdmin);
+            return RedirectToLocal(returnUrl, isAdministrator);
         }
 
         return View(new LoginInputModel { ReturnUrl = returnUrl });
@@ -238,7 +240,7 @@ public class AccountController : Controller
         return View();
     }
 
-    private IActionResult RedirectToLocal(string? returnUrl, bool isAdministrator = false)
+    private IActionResult RedirectToLocal(string? returnUrl, bool isAdministrator)
     {
         return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
             ? Redirect(returnUrl)

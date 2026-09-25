@@ -9,7 +9,7 @@ using SmartElderlyCare.Services;
 
 namespace SmartElderlyCare.Controllers;
 
-[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application")]
+[Authorize]
 public class PatientsController : Controller
 {
     private const string FamilyLinkRoles =
@@ -144,11 +144,6 @@ public class PatientsController : Controller
                 .AsNoTracking()
                 .Where(check => check.PatientId == id && check.ObservedAt >= startOffset && check.ObservedAt < endOffset)
                 .OrderByDescending(check => check.ObservedAt)
-                .ToListAsync(cancellationToken),
-            WelfareObservations = await _dbContext.WelfareObservations
-                .AsNoTracking()
-                .Where(observation => observation.PatientId == id && observation.ObservedAt >= startOffset && observation.ObservedAt < endOffset)
-                .OrderByDescending(observation => observation.ObservedAt)
                 .ToListAsync(cancellationToken),
             FacilityVisits = await _dbContext.FacilityVisits
                 .AsNoTracking()

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SmartElderlyCare.Data;
@@ -13,10 +12,14 @@ namespace SmartElderlyCare.Controllers;
 public class HomeController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly SignInManager<ApplicationUser> _signInManager;
 
-    public HomeController(ApplicationDbContext dbContext)
+    public HomeController(
+        ApplicationDbContext dbContext,
+        SignInManager<ApplicationUser> signInManager)
     {
         _dbContext = dbContext;
+        _signInManager = signInManager;
     }
 
     public IActionResult Index()
@@ -38,7 +41,7 @@ public class HomeController : Controller
         return RedirectToAction("Login", "Account");
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
     {
         var catNow = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2));
@@ -167,7 +170,7 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> UnreadAlerts(CancellationToken cancellationToken)
     {
         var alerts = await _dbContext.Alerts
@@ -192,7 +195,7 @@ public class HomeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Microsoft.AspNetCore.Authorization.Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> MarkAlertRead(long alertId, CancellationToken cancellationToken)
     {
         var alert = await _dbContext.Alerts
@@ -213,8 +216,7 @@ public class HomeController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync("AdminCookie");
-        await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+        await _signInManager.SignOutAsync();
         return RedirectToAction("Login", "Account");
     }
 

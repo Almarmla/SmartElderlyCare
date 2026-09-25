@@ -7,7 +7,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Controllers;
 
-[Authorize(AuthenticationSchemes = "AdminCookie,Identity.Application")]
+[Authorize]
 public class WorkspaceController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

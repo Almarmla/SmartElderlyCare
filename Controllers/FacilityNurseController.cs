@@ -149,7 +149,7 @@ public class FacilityNurseController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DiscontinueMedication(int medicationId, int patientId, CancellationToken cancellationToken)
+    public async Task<IActionResult> DiscontinueMedication(long medicationId, int patientId, CancellationToken cancellationToken)
     {
         var medication = await _dbContext.PatientMedications
             .SingleOrDefaultAsync(

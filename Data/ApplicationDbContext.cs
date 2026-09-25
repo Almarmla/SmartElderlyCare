@@ -21,6 +21,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<PatientMedication> PatientMedications => Set<PatientMedication>();
 
+    // Retained to preserve the legacy table; new welfare records use VhwWelfareCheck.
+    [Obsolete("Use VhwWelfareChecks instead.")]
     public DbSet<WelfareObservation> WelfareObservations => Set<WelfareObservation>();
 
     public DbSet<VhwWelfareCheck> VhwWelfareChecks => Set<VhwWelfareCheck>();
