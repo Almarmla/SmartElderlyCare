@@ -10,7 +10,7 @@
 </head>
 <body class="app-body">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark app-navbar mb-3">
+        <nav class="navbar navbar-expand-lg navbar-toggleable-sm navbar-dark app-navbar mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand app-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     <span class="app-brand-mark">S</span>
@@ -20,7 +20,7 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
@@ -103,7 +103,7 @@
                                     @displayName
                                     @if (roles.Count > 0)
                                     {
-                                        <span class="badge rounded-pill text-bg-light ms-1">@string.Join(", ", roles)</span>
+                                        <span class="badge rounded-pill text-bg-light ms-1 app-role-badge">@string.Join(", ", roles)</span>
                                     }
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">

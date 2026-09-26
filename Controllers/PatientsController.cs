@@ -39,12 +39,15 @@ public class PatientsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(
+        string? search,
+        bool showArchived = false,
+        CancellationToken cancellationToken = default)
     {
         var isFamilyUser = User.IsInRole(ApplicationRoles.Family);
         var query = _dbContext.Patients
             .AsNoTracking()
-            .Where(patient => patient.IsActive);
+            .Where(patient => patient.IsActive == !showArchived);
 
         if (isFamilyUser)
         {
@@ -76,6 +79,7 @@ public class PatientsController : Controller
             cancellationToken);
         ViewData["Search"] = search;
         ViewData["IsFamilyView"] = isFamilyUser;
+        ViewData["ShowArchived"] = showArchived;
         return View(patients);
     }
 
@@ -91,11 +95,13 @@ public class PatientsController : Controller
     }
 
     [HttpGet]
+    [Route("patients/{id:int}/history")]
     public async Task<IActionResult> History(
         int id,
         DateTime? startDate,
         DateTime? endDate,
-        CancellationToken cancellationToken)
+        bool allTime = false,
+        CancellationToken cancellationToken = default)
     {
         if (User.IsInRole(ApplicationRoles.Family))
         {
@@ -112,49 +118,75 @@ public class PatientsController : Controller
             }
         }
 
+        // Archived records stay readable so clinical staff and linked family
+        // members can still review history; the view flags the archived state.
         var patient = await _dbContext.Patients
             .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id && item.IsActive, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
         if (patient is null)
         {
             return NotFound();
         }
 
-        var end = (endDate ?? DateTime.Today).Date.AddDays(1);
-        var start = (startDate ?? DateTime.Today.AddMonths(-3)).Date;
-        if (start >= end)
+        ViewData["IsArchived"] = !patient.IsActive;
+
+        // With no explicit period the whole record is shown, so the timeline lists
+        // every activity ever captured for this patient.
+        var showAllTime = allTime || (!startDate.HasValue && !endDate.HasValue);
+        DateTimeOffset startOffset;
+        DateTimeOffset endOffset;
+        var periodStart = (startDate ?? DateTime.Today.AddMonths(-3)).Date;
+        var periodEnd = (endDate ?? DateTime.Today).Date;
+
+        if (showAllTime)
         {
-            ModelState.AddModelError(string.Empty, "The start date must be before the end date.");
-            start = end.AddMonths(-3).Date;
+            startOffset = DateTimeOffset.MinValue;
+            endOffset = DateTimeOffset.MaxValue;
         }
-        var startOffset = new DateTimeOffset(start, TimeSpan.Zero);
-        var endOffset = new DateTimeOffset(end, TimeSpan.Zero);
+        else if (periodStart > periodEnd)
+        {
+            ModelState.AddModelError(string.Empty, "The start date must be on or before the end date.");
+            showAllTime = true;
+            startOffset = DateTimeOffset.MinValue;
+            endOffset = DateTimeOffset.MaxValue;
+        }
+        else
+        {
+            // The date inputs are inclusive of the end day, so step one past it.
+            startOffset = new DateTimeOffset(periodStart, TimeSpan.Zero);
+            endOffset = new DateTimeOffset(periodEnd.AddDays(1), TimeSpan.Zero);
+        }
+
+        var facilityVisits = await _dbContext.FacilityVisits
+            .AsNoTracking()
+            .Where(visit => visit.PatientId == id && visit.VisitAt >= startOffset && visit.VisitAt < endOffset)
+            .OrderByDescending(visit => visit.VisitAt)
+            .ToListAsync(cancellationToken);
+        var welfareChecks = await _dbContext.VhwWelfareChecks
+            .AsNoTracking()
+            .Where(check => check.PatientId == id && check.ObservedAt >= startOffset && check.ObservedAt < endOffset)
+            .OrderByDescending(check => check.ObservedAt)
+            .ToListAsync(cancellationToken);
+        var alerts = await _dbContext.Alerts
+            .AsNoTracking()
+            .Where(alert => alert.PatientId == id && alert.CreatedAt >= startOffset && alert.CreatedAt < endOffset)
+            .OrderByDescending(alert => alert.CreatedAt)
+            .ToListAsync(cancellationToken);
 
         var model = new PatientHistoryViewModel
         {
             Patient = patient,
-            StartDate = start,
-            EndDate = end.AddDays(-1),
+            StartDate = periodStart,
+            EndDate = periodEnd,
+            ShowAllTime = showAllTime,
             Readings = await _dbContext.VitalSignsReadings
                 .AsNoTracking()
                 .Where(reading => reading.PatientId == id && reading.RecordedAt >= startOffset && reading.RecordedAt < endOffset)
                 .OrderByDescending(reading => reading.RecordedAt)
                 .ToListAsync(cancellationToken),
-            WelfareChecks = await _dbContext.VhwWelfareChecks
-                .AsNoTracking()
-                .Where(check => check.PatientId == id && check.ObservedAt >= startOffset && check.ObservedAt < endOffset)
-                .OrderByDescending(check => check.ObservedAt)
-                .ToListAsync(cancellationToken),
-            FacilityVisits = await _dbContext.FacilityVisits
-                .AsNoTracking()
-                .Where(visit => visit.PatientId == id && visit.VisitAt >= startOffset && visit.VisitAt < endOffset)
-                .OrderByDescending(visit => visit.VisitAt)
-                .ToListAsync(cancellationToken),
-            Alerts = await _dbContext.Alerts
-                .AsNoTracking()
-                .Where(alert => alert.PatientId == id && alert.CreatedAt >= startOffset && alert.CreatedAt < endOffset)
-                .OrderByDescending(alert => alert.CreatedAt)
-                .ToListAsync(cancellationToken),
+            WelfareChecks = welfareChecks,
+            FacilityVisits = facilityVisits,
+            Alerts = alerts,
             Medications = await _dbContext.PatientMedications
                 .AsNoTracking()
                 .Where(medication => medication.PatientId == id && medication.IsActive)
@@ -165,11 +197,65 @@ public class PatientsController : Controller
                 .Include(link => link.FamilyMemberUser)
                 .Where(link => link.PatientId == id && link.IsActive)
                 .OrderBy(link => link.RelationshipToPatient)
-                .ToListAsync(cancellationToken)
+                .ToListAsync(cancellationToken),
+            Activities = BuildActivityTimeline(facilityVisits, welfareChecks, alerts)
         };
 
         ViewData["PatientRiskResult"] = await _riskEvaluator.EvaluateAsync(id, cancellationToken);
         return View(model);
+    }
+
+    private static List<PatientActivity> BuildActivityTimeline(
+        IReadOnlyList<FacilityVisit> facilityVisits,
+        IReadOnlyList<VhwWelfareCheck> welfareChecks,
+        IReadOnlyList<Alert> alerts)
+    {
+        var activities = new List<PatientActivity>(
+            facilityVisits.Count + welfareChecks.Count + alerts.Count);
+
+        activities.AddRange(facilityVisits.Select(visit => new PatientActivity
+        {
+            OccurredAt = visit.VisitAt,
+            Type = PatientActivityType.FacilityVisit,
+            Title = string.IsNullOrWhiteSpace(visit.FacilityName)
+                ? "Facility visit"
+                : $"Facility visit · {visit.FacilityName}",
+            Description = string.Join(
+                " — ",
+                new[] { visit.Diagnosis, visit.Treatment, visit.ClinicalNotes }
+                    .Where(part => !string.IsNullOrWhiteSpace(part)))
+        }));
+
+        activities.AddRange(welfareChecks.Select(check => new PatientActivity
+        {
+            OccurredAt = check.ObservedAt,
+            Type = PatientActivityType.VhwWelfareCheck,
+            Title = $"VHW welfare check · {check.Status}",
+            Description = string.Join(
+                " — ",
+                new[]
+                {
+                    check.Mobility,
+                    check.Mood,
+                    check.Nutrition,
+                    check.SafetyConcern,
+                    check.MedicationTaken ? "Medication taken" : "Medication not taken",
+                    check.Notes
+                }
+                    .Where(part => !string.IsNullOrWhiteSpace(part)))
+        }));
+
+        activities.AddRange(alerts.Select(alert => new PatientActivity
+        {
+            OccurredAt = alert.CreatedAt,
+            Type = PatientActivityType.Alert,
+            Title = $"Alert · {alert.Type} ({alert.Severity})",
+            Description = alert.Message
+        }));
+
+        return activities
+            .OrderByDescending(activity => activity.OccurredAt)
+            .ToList();
     }
 
     [HttpPost]
@@ -227,13 +313,17 @@ public class PatientsController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
+        // Archived records stay editable so the record status switch can also be
+        // used to restore a patient; the view flags the archived state.
         var patient = await _dbContext.Patients
             .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id && item.IsActive, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
         if (patient is null)
         {
             return NotFound();
         }
+
+        ViewData["IsArchived"] = !patient.IsActive;
 
         var model = new PatientEditInputModel
         {
@@ -277,6 +367,7 @@ public class PatientsController : Controller
             return View(model);
         }
 
+        var wasArchived = !patient.IsActive;
         patient.FirstName = model.FirstName.Trim();
         patient.LastName = model.LastName.Trim();
         patient.DateOfBirth = model.DateOfBirth;
@@ -292,7 +383,9 @@ public class PatientsController : Controller
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        TempData["SuccessMessage"] = "Patient details updated successfully.";
+        TempData["SuccessMessage"] = wasArchived && patient.IsActive
+            ? $"{patient.FirstName} {patient.LastName} was unarchived / restored."
+            : "Patient details updated successfully.";
         return RedirectToAction(nameof(History), new { id = patient.Id });
     }
 
@@ -312,9 +405,11 @@ public class PatientsController : Controller
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         TempData["SuccessMessage"] = patient.IsActive
-            ? $"{patient.FirstName} {patient.LastName} was re-activated."
+            ? $"{patient.FirstName} {patient.LastName} was unarchived / restored."
             : $"{patient.FirstName} {patient.LastName} was archived.";
-        return RedirectToAction(nameof(Index));
+
+        // Land on the tab the patient now belongs to.
+        return RedirectToAction(nameof(Index), new { showArchived = !patient.IsActive });
     }
 
     [Authorize(Roles = FamilyLinkRoles)]
@@ -328,7 +423,7 @@ public class PatientsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> LinkFamilyMember(
-        FamilyMemberLinkInputModel model,
+        [Bind(Prefix = "Input")] FamilyMemberLinkInputModel model,
         CancellationToken cancellationToken)
     {
         if (ModelState.IsValid)

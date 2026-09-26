@@ -203,7 +203,7 @@ public class FacilityNurseController : Controller
             .Select(patient => new
             {
                 patient.Id,
-                FullName = $"{patient.FirstName} {patient.LastName} ({patient.PatientNumber})"
+                FullName = patient.FirstName + " " + patient.LastName + " (" + patient.PatientNumber + ")"
             })
             .ToListAsync(cancellationToken);
 

@@ -4,9 +4,11 @@
     ViewData["Title"] = "Patients";
     var riskResults = ViewData["PatientRiskLevels"] as IReadOnlyDictionary<int, PatientRiskResult>;
     var isFamilyView = ViewData["IsFamilyView"] is true;
+    var showArchived = ViewData["ShowArchived"] is true;
     var canManagePatient = User.IsInRole(ApplicationRoles.Nurse)
         || User.IsInRole(ApplicationRoles.FacilityNurse)
-        || User.IsInRole(ApplicationRoles.DhioAdmin);
+        || User.IsInRole(ApplicationRoles.DhioAdmin)
+        || User.IsInRole(ApplicationRoles.Administrator);
 }
 
 <div class="container py-4">
@@ -29,7 +31,23 @@
         <div class="alert alert-success">@successMessage</div>
     }
 
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link @(showArchived ? "" : "active")"
+               asp-action="Index"
+               asp-route-showArchived="false"
+               asp-route-search="@ViewData["Search"]">Active Patients</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(showArchived ? "active" : "")"
+               asp-action="Index"
+               asp-route-showArchived="true"
+               asp-route-search="@ViewData["Search"]">Archived Patients</a>
+        </li>
+    </ul>
+
     <form method="get" class="card border-0 shadow-sm p-3 mb-3">
+        <input type="hidden" name="showArchived" value="@showArchived.ToString().ToLowerInvariant()" />
         <div class="input-group">
             <input name="search" value="@ViewData["Search"]" class="form-control" placeholder="Search by patient number, name, or condition" />
             <button class="btn btn-outline-success" type="submit">Search</button>
@@ -56,7 +74,9 @@
                     <tr><td colspan="7" class="text-center text-muted py-5">
                         @(isFamilyView
                             ? "No family members are linked to your account yet. Please contact the care facility to be linked to a relative."
-                            : "No patients have been registered yet.")
+                            : showArchived
+                                ? "No archived patients."
+                                : "No patients have been registered yet.")
                     </td></tr>
                 }
                 else
@@ -83,7 +103,14 @@
                                         <a class="btn btn-sm btn-outline-success" asp-action="Edit" asp-route-id="@patient.Id">Edit</a>
                                         <form method="post" asp-action="ToggleStatus">
                                             <input type="hidden" name="id" value="@patient.Id" />
-                                            <button class="btn btn-sm btn-outline-danger" type="submit" title="Archive this patient record">Archive</button>
+                                            @if (showArchived)
+                                            {
+                                                <button class="btn btn-sm btn-outline-primary" type="submit" title="Restore this patient record">Unarchive</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-outline-danger" type="submit" title="Archive this patient record">Archive</button>
+                                            }
                                         </form>
                                     }
                                 </div>

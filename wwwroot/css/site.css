@@ -65,6 +65,33 @@ body {
   background: rgba(255, 255, 255, .12);
 }
 
+/* The full role list is already shown in the account dropdown header, so the
+   inline badge is redundant clutter that widens the bar. Keep it on wide
+   screens only, and cap it there so many roles cannot break the layout. */
+.app-role-badge {
+  display: none;
+}
+
+@media (min-width: 1400px) {
+  .app-role-badge {
+    display: inline-block;
+    max-width: 22ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+}
+
+/* Let a long role list shrink instead of stretching the collapsed menu. */
+.app-navbar .navbar-collapse .navbar-nav > li {
+  min-width: 0;
+}
+
+.app-navbar .dropdown-menu {
+  max-width: min(320px, calc(100vw - 2rem));
+}
+
 .app-brand {
   display: inline-flex;
   align-items: center;
@@ -1341,17 +1368,40 @@ body {
 
   .dashboard-nav {
     display: flex;
+    gap: 8px;
     overflow-x: auto;
     padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dashboard-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .dashboard-nav-link {
     flex: 0 0 auto;
   }
 
-  .sidebar-help,
-  .dashboard-logout {
+  .sidebar-help {
     display: none;
+  }
+
+  /* Keep sign-out reachable on small screens instead of hiding it. */
+  .dashboard-logout-form {
+    margin-top: 10px;
+  }
+
+  .dashboard-logout {
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 11px;
+    background: transparent;
+    color: #718791;
+    font-size: .9rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
   }
 
   .dashboard-grid,
@@ -1410,10 +1460,17 @@ body {
     #f6f9fb;
 }
 
+/* The sticky full-height rail only applies while the sidebar sits beside the
+   content. Below 820px the shell stacks, so it must stay in normal flow. */
+@media (min-width: 821px) {
+  .dashboard-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+}
+
 .dashboard-sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
   background: rgba(255, 255, 255, .88);
   backdrop-filter: blur(18px);
 }
@@ -1732,6 +1789,70 @@ body {
 .chart-box {
   position: relative;
   height: 300px;
+}
+
+/* Responsive guards
+   --------------------------
+   Long identifiers (emails, national IDs, phone numbers) and wide data tables
+   are the main sources of horizontal overflow on narrow screens. */
+
+.app-body {
+  /* `clip` contains stray wide children without creating a scroll container,
+     which would otherwise break the sticky dashboard sidebar. */
+  overflow-x: clip;
+}
+
+.dashboard-page {
+  overflow-x: clip;
+}
+
+.app-body table {
+  width: 100%;
+}
+
+.app-body td,
+.app-body th {
+  overflow-wrap: anywhere;
+}
+
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.app-body .btn,
+.app-body .badge,
+.app-body .alert {
+  max-width: 100%;
+}
+
+.app-body h1,
+.app-body h2,
+.app-body h3,
+.app-body h4 {
+  overflow-wrap: break-word;
+}
+
+.app-body .card-body,
+.app-body .card-header,
+.app-body .card-footer {
+  min-width: 0;
+}
+
+.app-body .input-group {
+  flex-wrap: nowrap;
+}
+
+.app-body .input-group > .form-control,
+.app-body .input-group > .form-select {
+  min-width: 0;
+}
+
+/* Let long button labels wrap rather than force the page wider. */
+@media (max-width: 480px) {
+  .app-body .btn {
+    white-space: normal;
+  }
 }
 
 @media print {

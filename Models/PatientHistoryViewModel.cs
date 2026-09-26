@@ -19,4 +19,26 @@ public class PatientHistoryViewModel
     public IReadOnlyList<PatientMedication> Medications { get; set; } = [];
 
     public IReadOnlyList<PatientFamilyMember> FamilyMembers { get; set; } = [];
+
+    public IReadOnlyList<PatientActivity> Activities { get; set; } = [];
+
+    public bool ShowAllTime { get; set; }
+}
+
+public enum PatientActivityType
+{
+    FacilityVisit,
+    VhwWelfareCheck,
+    Alert
+}
+
+public sealed class PatientActivity
+{
+    public DateTimeOffset OccurredAt { get; set; }
+
+    public PatientActivityType Type { get; set; }
+
+    public string Title { get; set; } = string.Empty;
+
+    public string Description { get; set; } = string.Empty;
 }

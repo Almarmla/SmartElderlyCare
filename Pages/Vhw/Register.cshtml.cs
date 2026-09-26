@@ -6,7 +6,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Pages.Vhw;
 
-[Authorize(Roles = "VHW")]
+[Authorize(Roles = "VHW,Nurse,FacilityNurse,DhioAdmin,Administrator")]
 public class RegisterModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
@@ -23,11 +23,13 @@ public class RegisterModel : PageModel
         Patients = await _dbContext.Patients
             .AsNoTracking()
             .Where(patient => patient.IsActive)
+            .OrderBy(patient => patient.LastName)
+            .ThenBy(patient => patient.FirstName)
             .Select(patient => new PatientRegisterRow
             {
                 PatientId = patient.Id,
                 PatientNumber = patient.PatientNumber,
-                FullName = $"{patient.FirstName} {patient.LastName}",
+                FullName = patient.FirstName + " " + patient.LastName,
                 MedicalCondition = patient.MedicalCondition,
                 MostRecentCheck = patient.VhwWelfareChecks
                     .OrderByDescending(check => check.ObservedAt)
@@ -38,7 +40,6 @@ public class RegisterModel : PageModel
                     })
                     .FirstOrDefault()
             })
-            .OrderBy(patient => patient.FullName)
             .ToListAsync(cancellationToken);
     }
 

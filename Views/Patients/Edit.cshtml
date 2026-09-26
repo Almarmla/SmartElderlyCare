@@ -1,6 +1,7 @@
 @model SmartElderlyCare.Models.PatientEditInputModel
 @{
     ViewData["Title"] = "Edit Patient";
+    var isArchived = ViewData["IsArchived"] is true;
 }
 
 <div class="container py-4">
@@ -10,6 +11,14 @@
         <h1 class="mt-3 mb-1">Edit @Model.FirstName @Model.LastName</h1>
         <p class="text-muted">Update the patient's bio-data, chronic care programme, and emergency contact details.</p>
     </div>
+
+    @if (isArchived)
+    {
+        <div class="alert alert-warning">
+            <strong>This patient record is currently ARCHIVED.</strong>
+            <div class="small mt-1">Turn on the record status switch below and save to restore this patient to the active registry.</div>
+        </div>
+    }
 
     <form asp-action="Edit" method="post" class="card border-0 shadow-sm p-4">
         <input type="hidden" asp-for="Id" />
@@ -42,7 +51,9 @@
         <div class="form-check form-switch">
             <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" />
             <label asp-for="IsActive" class="form-check-label"></label>
-            <div class="form-text">Turn off to archive this patient record, for example when a resident relocates or passes away.</div>
+            <div class="form-text">@(isArchived
+                ? "Turn on to restore this patient to the active registry, or off to archive the record, for example when a resident relocates or passes away."
+                : "Turn off to archive this patient record, for example when a resident relocates or passes away.")</div>
         </div>
         <span asp-validation-for="IsActive" class="text-danger"></span>
 

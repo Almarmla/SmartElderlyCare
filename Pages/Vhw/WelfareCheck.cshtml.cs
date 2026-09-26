@@ -9,7 +9,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Pages.Vhw;
 
-[Authorize(Roles = "VHW")]
+[Authorize(Roles = "VHW,Nurse,FacilityNurse,DhioAdmin,Administrator")]
 public class WelfareCheckModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
@@ -19,7 +19,7 @@ public class WelfareCheckModel : PageModel
         _dbContext = dbContext;
     }
 
-    public SelectList Patients { get; private set; } = null!;
+    public SelectList Patients { get; private set; } = new(new List<PatientOption>(), nameof(PatientOption.Id), nameof(PatientOption.FullName));
 
     public IReadOnlyList<PatientMedication> Medications { get; private set; } = new List<PatientMedication>();
 
@@ -56,7 +56,11 @@ public class WelfareCheckModel : PageModel
             return Page();
         }
 
-        if (Input.FollowUpRequired && Input.FollowUpAt.HasValue && Input.FollowUpAt.Value <= DateTimeOffset.UtcNow)
+        // The datetime-local input arrives with Kind=Unspecified, so compare it as
+        // UTC to match how it is persisted below rather than as server-local time.
+        if (Input.FollowUpRequired
+            && Input.FollowUpAt.HasValue
+            && DateTime.SpecifyKind(Input.FollowUpAt.Value, DateTimeKind.Utc) <= DateTime.UtcNow)
         {
             ModelState.AddModelError(nameof(Input.FollowUpAt), "The follow-up date must be in the future.");
             await LoadPatientsAsync(cancellationToken);
@@ -80,7 +84,7 @@ public class WelfareCheckModel : PageModel
             Nutrition = Input.Nutrition,
             SafetyConcern = Input.SafetyConcern,
             FollowUpRequired = Input.FollowUpRequired,
-            FollowUpAt = Input.FollowUpAt,
+            FollowUpAt = Input.FollowUpAt.HasValue ? new DateTimeOffset(DateTime.SpecifyKind(Input.FollowUpAt.Value, DateTimeKind.Utc)) : null,
             Notes = Input.Notes,
             ObservedAt = DateTimeOffset.UtcNow
         });
@@ -119,14 +123,14 @@ public class WelfareCheckModel : PageModel
             .Where(patient => patient.IsActive)
             .OrderBy(patient => patient.LastName)
             .ThenBy(patient => patient.FirstName)
-            .Select(patient => new
+            .Select(patient => new PatientOption
             {
-                patient.Id,
-                Name = $"{patient.FirstName} {patient.LastName}"
+                Id = patient.Id,
+                FullName = patient.FirstName + " " + patient.LastName
             })
             .ToListAsync(cancellationToken);
 
-        Patients = new SelectList(patients, nameof(InputModel.PatientId), "Name");
+        Patients = new SelectList(patients, nameof(PatientOption.Id), nameof(PatientOption.FullName));
     }
 
     public class InputModel
@@ -159,9 +163,16 @@ public class WelfareCheckModel : PageModel
 
         [Display(Name = "Follow-up date")]
         [DataType(DataType.DateTime)]
-        public DateTimeOffset? FollowUpAt { get; set; }
+        public DateTime? FollowUpAt { get; set; }
 
         [StringLength(2000)]
         public string? Notes { get; set; }
+    }
+
+    private sealed class PatientOption
+    {
+        public int Id { get; init; }
+
+        public string FullName { get; init; } = string.Empty;
     }
 }
