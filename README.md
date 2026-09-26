@@ -24,20 +24,31 @@ SmartElderlyCare is an ASP.NET Core MVC web application intended to support elde
 - Fixed local development ports.
 - Standard ASP.NET Core MVC error and privacy pages.
 
-The configured administrator account is:
+The administrator account is bootstrapped from configuration on an empty database. Its
+name, email, and ASP.NET Identity password hash are **not** stored in the repository.
 
-- Name: `Almar Mlambo`
-- Email: `almarmlambo@gmail.com`
+For local development, keep them in user secrets:
 
-The password is stored as a salted PBKDF2 hash in `appsettings.json`, not as plain text. For production, move the admin configuration to user secrets or environment variables.
+```bash
+dotnet user-secrets set "AdminUser:Name" "Your Name"
+dotnet user-secrets set "AdminUser:Email" "you@example.com"
+dotnet user-secrets set "AdminUser:IdentityPasswordHash" "<identity v3 hash>"
+```
 
-If the configured administrator is locked out and no other administrator can sign in, run the recovery command locally on the application host:
+`IdentityPasswordHash` is an ASP.NET Identity v3 password hash, not a plaintext
+password. Once the administrator exists these values can be removed; the application
+only needs them to create the account.
+
+For production, supply them as `AdminUser__Name`, `AdminUser__Email`, and
+`AdminUser__IdentityPasswordHash` environment variables. See `DEPLOY.md`.
+
+If a local administrator is locked out, run the recovery command on the application host:
 
 ```text
 dotnet run -- --unlock-admin
 ```
 
-This command is not an HTTP endpoint and only clears the failed-login count and lockout end date for the configured `AdminUser:Email`. It requires local access to the application and database; it does not bypass password verification or unlock arbitrary users.
+This command is not an HTTP endpoint and only clears the failed-login count and lockout end date for the configured `AdminUser:Email`. It requires local access to the application and database, and is rejected outside the Development environment.
 
 ## Technology stack
 

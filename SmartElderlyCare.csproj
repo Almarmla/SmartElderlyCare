@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>SmartElderlyCare-3f9c1d84-6b2a-4f57-9e0c-8a5d2b41c7e6</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

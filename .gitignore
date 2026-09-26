@@ -19,6 +19,24 @@ SmartElderlyCare.db-shm
 SmartElderlyCare.db-wal
 
 ## Local secrets and environment overrides
+## Never commit real environment configuration or key material. Templates
+## (appsettings.Production.example.json) are tracked deliberately.
 appsettings.Local.json
 appsettings.*.Local.json
+appsettings.Production.json
+appsettings.Staging.json
+appsettings.*.Production.json
+.env
+.env.*
 *.pfx
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.secret
+secrets.json
+user-secrets.json
+publish/
+publishProfiles/
+*.publishsettings

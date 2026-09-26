@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=tests.trx" --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults/*.trx
+
+  migrations:
+    name: Verify migrations are in sync with the model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up EF Core tool
+        run: dotnet tool install --global dotnet-ef --version 8.*
+
+      # Design-time host construction runs the top-level statements in Program.cs
+      # up to Build(), which validates configuration. A placeholder is required;
+      # nothing in this job ever opens a connection.
+      - name: Check for pending model changes
+        env:
+          ConnectionStrings__DefaultConnection: "Server=localhost;Database=SmartElderlyCare;User Id=sa;Password=Placeholder_Not_Used;Encrypt=True;TrustServerCertificate=True"
+        run: |
+          dotnet tool update --global dotnet-ef --version 8.*
+          dotnet ef migrations has-pending-model-changes \
+            --project SmartElderlyCare.csproj \
+            --startup-project SmartElderlyCare.csproj
+
+  secret-scan:
+    name: Guard against committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The gitleaks action requires a license key on private repositories, so the
+      # standalone binary is used instead to keep CI working out of the box.
+      - name: Download gitleaks
+        run: |
+          GITLEAKS_VERSION=8.18.4
+          curl -sSfL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan the current tree for credentials
+        run: gitleaks dir . --redact --no-banner
+
+      - name: Assert known-bad values are gone from the working tree
+        run: |
+          # These exact values were committed before configuration was sanitised.
+          # They must never reappear in the current tree, even though older commits
+          # still contain them.
+          if git grep -nI -e 'mlamboalmar@gmail.com' -e 'almarmlambo@gmail.com' \
+               -e 'PasswordIterations' -e 'PasswordSalt' -- . ; then
+            echo "::error::A previously committed credential has been reintroduced."
+            exit 1
+          fi
+          echo "No known-bad credentials present."
+
+      - name: Audit git history for credentials
+        # Advisory only. Leaked credentials predate this pipeline and can only be
+        # purged by rewriting history, which is a separate, deliberate operation.
+        # This step exists to surface any *additional* historical leaks.
+        continue-on-error: true
+        run: gitleaks detect --source . --redact --no-banner

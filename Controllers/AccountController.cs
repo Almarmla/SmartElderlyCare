@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,16 +10,13 @@ public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IConfiguration _configuration;
 
     public AccountController(
         SignInManager<ApplicationUser> signInManager,
-        UserManager<ApplicationUser> userManager,
-        IConfiguration configuration)
+        UserManager<ApplicationUser> userManager)
     {
         _signInManager = signInManager;
         _userManager = userManager;
-        _configuration = configuration;
     }
 
     [AllowAnonymous]
@@ -116,28 +112,31 @@ public class AccountController : Controller
         }
 
         var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user is null || !user.IsActive)
+        if (user is null)
         {
-            if (await SignInConfiguredAdministratorAsync(model.Email, model.Password))
-            {
-                return RedirectToLocal(model.ReturnUrl, isAdministrator: true);
-            }
-
-            ModelState.AddModelError(string.Empty, "The email or password is incorrect, or the account is inactive.");
+            ModelState.AddModelError(string.Empty, "The email or password is incorrect.");
             return View(model);
         }
 
+        // Always delegate to SignInManager so failed attempts count towards
+        // lockout. Deactivated accounts are rejected after the credential check
+        // and immediately signed out, so they cannot be used to probe passwords.
         var result = await _signInManager.PasswordSignInAsync(
             user,
             model.Password,
             model.RememberMe,
             lockoutOnFailure: true);
 
-        if (!result.Succeeded)
+        if (!result.Succeeded || !user.IsActive)
         {
-            ModelState.AddModelError(string.Empty, result.IsLockedOut
+            if (result.Succeeded)
+            {
+                await _signInManager.SignOutAsync();
+            }
+
+            ModelState.AddModelError(string.Empty, !result.Succeeded && result.IsLockedOut
                 ? "This account is temporarily locked. Contact an administrator."
-                : "The email or password is incorrect.");
+                : "The email or password is incorrect, or the account is inactive.");
             return View(model);
         }
 
@@ -208,104 +207,6 @@ public class AccountController : Controller
             : isAdministrator
                 ? RedirectToAction("Dashboard", "Home")
                 : RedirectToAction("Index", "Workspace");
-    }
-
-    private async Task<bool> SignInConfiguredAdministratorAsync(string email, string password)
-    {
-        var admin = _configuration.GetSection("AdminUser");
-        var configuredEmail = admin["Email"];
-        var configuredSalt = admin["PasswordSalt"];
-        var configuredHash = admin["PasswordHash"];
-        var identityPasswordHash = admin["IdentityPasswordHash"];
-        var iterations = admin.GetValue<int>("PasswordIterations");
-
-        if (!string.Equals(email.Trim(), configuredEmail, StringComparison.OrdinalIgnoreCase)
-            || string.IsNullOrWhiteSpace(configuredSalt)
-            || string.IsNullOrWhiteSpace(configuredHash)
-            || string.IsNullOrWhiteSpace(identityPasswordHash)
-            || iterations <= 0
-            || !VerifyPassword(password, configuredSalt, configuredHash, iterations))
-        {
-            return false;
-        }
-
-        var user = await _userManager.FindByEmailAsync(configuredEmail!);
-        if (user is null)
-        {
-            user = new ApplicationUser
-            {
-                UserName = configuredEmail!,
-                Email = configuredEmail!,
-                EmailConfirmed = true,
-                DisplayName = admin["Name"] ?? configuredEmail!,
-                IsActive = true
-            };
-
-            user.PasswordHash = identityPasswordHash;
-            var createResult = await _userManager.CreateAsync(user);
-            if (!createResult.Succeeded)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            user.Email = configuredEmail;
-            user.UserName = configuredEmail;
-            user.EmailConfirmed = true;
-            user.IsActive = true;
-            var updateResult = await _userManager.UpdateAsync(user);
-            if (!updateResult.Succeeded)
-            {
-                return false;
-            }
-        }
-
-        var roles = new[]
-        {
-            ApplicationRoles.Nurse,
-            ApplicationRoles.FacilityNurse,
-            ApplicationRoles.VHW,
-            ApplicationRoles.RecordsStaff,
-            ApplicationRoles.Family,
-            ApplicationRoles.HiuClerk,
-            ApplicationRoles.DhioAdmin,
-            ApplicationRoles.Administrator,
-            ApplicationRoles.Dmo
-        };
-        var existingRoles = await _userManager.GetRolesAsync(user);
-        foreach (var role in roles.Except(existingRoles, StringComparer.Ordinal))
-        {
-            var roleResult = await _userManager.AddToRoleAsync(user, role);
-            if (!roleResult.Succeeded)
-            {
-                return false;
-            }
-        }
-
-        await _signInManager.SignInAsync(user, isPersistent: false);
-        return true;
-    }
-
-    private static bool VerifyPassword(string password, string saltBase64, string hashBase64, int iterations)
-    {
-        try
-        {
-            var salt = Convert.FromBase64String(saltBase64);
-            var expectedHash = Convert.FromBase64String(hashBase64);
-            var actualHash = Rfc2898DeriveBytes.Pbkdf2(
-                password,
-                salt,
-                iterations,
-                HashAlgorithmName.SHA256,
-                expectedHash.Length);
-
-            return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
     }
 
     public class LoginInputModel
