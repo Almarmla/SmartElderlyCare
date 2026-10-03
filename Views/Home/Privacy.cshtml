@@ -1,6 +1,101 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Privacy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm p-4">
+                <h2>Privacy Policy</h2>
+                <p class="text-muted">
+                    This notice explains what information SmartElderlyCare collects, why we
+                    collect it, and how we protect it.
+                </p>
+
+                <h4 class="mt-4">1. Purpose of the system</h4>
+                <p>
+                    SmartElderlyCare helps health facilities, Village Health Workers (VHWs) and the
+                    Health Information Unit (HIU) monitor the health and welfare of elderly patients
+                    between clinic visits.
+                </p>
+
+                <h4 class="mt-4">2. Information we collect</h4>
+                <ul>
+                    <li>
+                        <strong>Patient details:</strong> name, date of birth, gender, national ID,
+                        address, phone, medical condition, chronic care programme, emergency contact.
+                    </li>
+                    <li>
+                        <strong>Vital signs:</strong> temperature, blood pressure, pulse, respiration,
+                        oxygen saturation, blood glucose, weight.
+                    </li>
+                    <li>Facility visit records, VHW welfare checks, and alerts.</li>
+                    <li>
+                        <strong>Staff account details:</strong> display name, email, phone, role,
+                        login activity.
+                    </li>
+                </ul>
+
+                <h4 class="mt-4">3. How the information is used</h4>
+                <ul>
+                    <li>To check readings against safe thresholds and raise alerts.</li>
+                    <li>To show patient history and risk level to authorised staff.</li>
+                    <li>To prepare monthly DHIS2 indicator reports and district reports.</li>
+                    <li>Not used for advertising and not sold to any third party.</li>
+                </ul>
+
+                <h4 class="mt-4">4. Who can see the information</h4>
+                <ul>
+                    <li>
+                        Access depends on the user role (Administrator, Nurse, Facility Nurse, VHW,
+                        Records Staff, HIU Clerk, DHIO Admin, DMO, Family).
+                    </li>
+                    <li>Family members see only the patient they are linked to.</li>
+                    <li>
+                        Reports sent to DHIS2 contain aggregated indicators, not individual patient
+                        details.
+                    </li>
+                </ul>
+
+                <h4 class="mt-4">5. How the information is protected</h4>
+                <ul>
+                    <li>Passwords are stored in hashed form and never shown in plain text.</li>
+                    <li>
+                        Role-based access control, account lockout after 5 failed logins
+                        (15 minutes), and automatic session expiry.
+                    </li>
+                    <li>Secure cookies and anti-forgery protection on forms.</li>
+                    <li>An audit trail records administrative actions (who, what and when).</li>
+                    <li>Regular database backups.</li>
+                </ul>
+
+                <h4 class="mt-4">6. Keeping information</h4>
+                <p>
+                    Records are kept while the patient is enrolled and as required by Ministry of
+                    Health and Child Care rules. Accounts of staff who leave are deactivated.
+                </p>
+
+                <h4 class="mt-4">7. Your rights</h4>
+                <p>
+                    Patients and their families may ask to view or correct their information through
+                    the facility or the contact below, in line with the Cyber and Data Protection
+                    Act of Zimbabwe.
+                </p>
+
+                <h4 class="mt-4">8. Contact</h4>
+                <ul>
+                    <li>Email: support@@elderlycare.gov.zw</li>
+                    <li>Phone: +263 242 700000, +263 772 000001</li>
+                </ul>
+
+                <h4 class="mt-4">9. Changes to this notice</h4>
+                <p>
+                    This notice may be updated as the system grows or as laws change. The date
+                    below shows when it was last reviewed.
+                </p>
+
+                <p class="small text-muted mb-0">Last updated: 3 October 2026</p>
+            </div>
+        </div>
+    </div>
+</div>
