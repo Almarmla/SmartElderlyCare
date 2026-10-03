@@ -25,9 +25,7 @@ public class AccountController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            var isAdministrator = User.IsInRole(ApplicationRoles.Administrator)
-                || User.IsInRole(ApplicationRoles.DhioAdmin);
-            return RedirectToLocal(returnUrl, isAdministrator);
+            return RedirectToLocal(returnUrl);
         }
 
         return View(new LoginInputModel { ReturnUrl = returnUrl });
@@ -140,9 +138,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var isAdministrator = await _userManager.IsInRoleAsync(user, ApplicationRoles.Administrator)
-            || await _userManager.IsInRoleAsync(user, ApplicationRoles.DhioAdmin);
-        return RedirectToLocal(model.ReturnUrl, isAdministrator);
+        return RedirectToLocal(model.ReturnUrl);
     }
 
     [Authorize]
@@ -200,13 +196,11 @@ public class AccountController : Controller
         return View();
     }
 
-    private IActionResult RedirectToLocal(string? returnUrl, bool isAdministrator)
+    private IActionResult RedirectToLocal(string? returnUrl)
     {
         return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
             ? Redirect(returnUrl)
-            : isAdministrator
-                ? RedirectToAction("Dashboard", "Home")
-                : RedirectToAction("Index", "Workspace");
+            : RedirectToAction("Index", "Workspace");
     }
 
     public class LoginInputModel

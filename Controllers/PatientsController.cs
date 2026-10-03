@@ -83,6 +83,7 @@ public class PatientsController : Controller
         return View(patients);
     }
 
+    [Authorize(Roles = AllowedStaffRoles)]
     [HttpGet]
     public IActionResult Register()
     {
@@ -258,6 +259,7 @@ public class PatientsController : Controller
             .ToList();
     }
 
+    [Authorize(Roles = AllowedStaffRoles)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(

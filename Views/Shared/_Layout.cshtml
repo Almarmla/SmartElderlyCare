@@ -30,9 +30,18 @@
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Dashboard">Dashboard</a>
-                            </li>
+                            @if (User.IsInRole(ApplicationRoles.Administrator)
+                                || User.IsInRole(ApplicationRoles.DhioAdmin)
+                                || User.IsInRole(ApplicationRoles.Nurse)
+                                || User.IsInRole(ApplicationRoles.FacilityNurse)
+                                || User.IsInRole(ApplicationRoles.HiuClerk)
+                                || User.IsInRole(ApplicationRoles.RecordsStaff)
+                                || User.IsInRole(ApplicationRoles.VHW))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Dashboard">Dashboard</a>
+                                </li>
+                            }
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="Workspace" asp-action="Index">My Workspace</a>
                             </li>
@@ -80,7 +89,7 @@
                                 </li>
                             }
 
-                            @if (User.IsInRole(ApplicationRoles.DhioAdmin) || User.IsInRole(ApplicationRoles.Administrator))
+                            @if (User.IsInRole(ApplicationRoles.Administrator))
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Administration</a>

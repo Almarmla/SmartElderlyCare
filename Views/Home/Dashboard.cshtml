@@ -35,13 +35,24 @@
             <a class="dashboard-nav-link" asp-controller="Patients" asp-action="Index">
                 <span>♙</span> Residents
             </a>
-            <a class="dashboard-nav-link" asp-page="/Returns/MonthlySummary">
-                <span>▣</span> Monthly Returns
-            </a>
-            <a class="dashboard-nav-link" asp-page="/Hiu/MonthlyReport">
-                <span>◫</span> Reports
-            </a>
-            @if (User.IsInRole(ApplicationRoles.Administrator) || User.IsInRole(ApplicationRoles.DhioAdmin))
+            @if (User.IsInRole(ApplicationRoles.RecordsStaff)
+                || User.IsInRole(ApplicationRoles.FacilityNurse)
+                || User.IsInRole(ApplicationRoles.HiuClerk))
+            {
+                <a class="dashboard-nav-link" asp-page="/Returns/MonthlySummary">
+                    <span>▣</span> Monthly Returns
+                </a>
+            }
+            @if (User.IsInRole(ApplicationRoles.HiuClerk)
+                || User.IsInRole(ApplicationRoles.RecordsStaff)
+                || User.IsInRole(ApplicationRoles.DhioAdmin)
+                || User.IsInRole(ApplicationRoles.Dmo))
+            {
+                <a class="dashboard-nav-link" asp-page="/Hiu/MonthlyReport">
+                    <span>◫</span> Reports
+                </a>
+            }
+            @if (User.IsInRole(ApplicationRoles.Administrator))
             {
                 <a class="dashboard-nav-link" asp-area="Admin" asp-page="/Roles/Index">
                     <span>⚙</span> Roles

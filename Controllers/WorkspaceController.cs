@@ -55,9 +55,12 @@ public class WorkspaceController : Controller
 
     private string ResolveRole()
     {
-        if (User.IsInRole(ApplicationRoles.Administrator)
-            || User.IsInRole(ApplicationRoles.DhioAdmin)
-            || User.HasClaim(ClaimTypes.Role, "Administrator"))
+        if (User.IsInRole(ApplicationRoles.Administrator) || User.HasClaim(ClaimTypes.Role, "Administrator"))
+        {
+            return ApplicationRoles.Administrator;
+        }
+
+        if (User.IsInRole(ApplicationRoles.DhioAdmin))
         {
             return ApplicationRoles.DhioAdmin;
         }
@@ -85,11 +88,16 @@ public class WorkspaceController : Controller
     private static IReadOnlyList<RoleWorkspaceAction> ActionsFor(string role) =>
         role switch
         {
-            ApplicationRoles.DhioAdmin =>
+            ApplicationRoles.Administrator =>
             [
                 new("Manage user accounts", "Create, edit, assign roles, deactivate, or reactivate users.", "", Page: "/Users/Index", Area: "Admin"),
                 new("Configure thresholds", "Set safe ranges for each vital-sign metric and condition.", "", Page: "/Thresholds/Edit", Area: "Admin", Style: "purple"),
                 new("Review audit log", "Inspect the trail of account and threshold changes.", "", Page: "/AuditLogs/Index", Area: "Admin", Style: "purple"),
+                new("Link family members", "Grant registered family accounts access to a patient's history.", "Patients", "LinkFamilyMember", Style: "purple"),
+                new("Review patient history", "Search registered patients and inspect their full capture history.", "Patients", "Index", Style: "blue")
+            ],
+            ApplicationRoles.DhioAdmin =>
+            [
                 new("Link family members", "Grant registered family accounts access to a patient's history.", "Patients", "LinkFamilyMember", Style: "purple"),
                 new("Review patient history", "Search registered patients and inspect their full capture history.", "Patients", "Index", Style: "blue")
             ],

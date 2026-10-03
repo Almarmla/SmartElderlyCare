@@ -11,6 +11,15 @@ namespace SmartElderlyCare.Controllers;
 
 public class HomeController : Controller
 {
+    private const string DashboardRoles =
+        ApplicationRoles.Administrator + "," +
+        ApplicationRoles.DhioAdmin + "," +
+        ApplicationRoles.Nurse + "," +
+        ApplicationRoles.FacilityNurse + "," +
+        ApplicationRoles.HiuClerk + "," +
+        ApplicationRoles.RecordsStaff + "," +
+        ApplicationRoles.VHW;
+
     private readonly ApplicationDbContext _dbContext;
     private readonly SignInManager<ApplicationUser> _signInManager;
 
@@ -41,7 +50,7 @@ public class HomeController : Controller
         return RedirectToAction("Login", "Account");
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = DashboardRoles)]
     public async Task<IActionResult> Dashboard(CancellationToken cancellationToken)
     {
         var catNow = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(2));
@@ -170,7 +179,7 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = DashboardRoles)]
     public async Task<IActionResult> UnreadAlerts(CancellationToken cancellationToken)
     {
         var alerts = await _dbContext.Alerts
@@ -195,7 +204,7 @@ public class HomeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = DashboardRoles)]
     public async Task<IActionResult> MarkAlertRead(long alertId, CancellationToken cancellationToken)
     {
         var alert = await _dbContext.Alerts

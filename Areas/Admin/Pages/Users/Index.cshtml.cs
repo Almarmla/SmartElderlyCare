@@ -9,7 +9,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.Users;
 
-[Authorize(Roles = ApplicationRoles.DhioAdmin + "," + ApplicationRoles.Administrator)]
+[Authorize(Roles = ApplicationRoles.Administrator)]
 public class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
@@ -76,10 +76,22 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        await _userManager.AddToRoleAsync(user, Input.Role);
+        var roleResult = await _userManager.AddToRoleAsync(user, Input.Role);
+        if (!roleResult.Succeeded)
+        {
+            foreach (var error in roleResult.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+
+            await LoadUsersAsync(cancellationToken);
+            return Page();
+        }
+
         await AddAuditAsync(AdministrationAction.UserCreated, user.Id, user.Id, $"Created user with role {Input.Role}.");
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return RedirectToPage();
+        TempData["SuccessMessage"] = $"User {Input.DisplayName} ({Input.Role}) was created successfully.";
+        return RedirectToPage("./Index");
     }
 
     public async Task<IActionResult> OnPostResetPasswordAsync(string id, string newPassword, CancellationToken cancellationToken)

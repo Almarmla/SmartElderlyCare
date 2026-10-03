@@ -7,7 +7,7 @@ using SmartElderlyCare.Models;
 
 namespace SmartElderlyCare.Areas.Admin.Pages.AuditLogs;
 
-[Authorize(Roles = ApplicationRoles.DhioAdmin + "," + ApplicationRoles.Administrator)]
+[Authorize(Roles = ApplicationRoles.Administrator)]
 public class IndexModel : PageModel
 {
     private const int PageSize = 25;
