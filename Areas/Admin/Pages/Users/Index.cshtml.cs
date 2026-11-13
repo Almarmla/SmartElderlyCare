@@ -1,9 +1,11 @@
+using System.Data.Common;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SmartElderlyCare.Data;
 using SmartElderlyCare.Models;
 
@@ -15,12 +17,18 @@ public class IndexModel : PageModel
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public IndexModel(
+        ApplicationDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        ILogger<IndexModel> logger)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _roleManager = roleManager;
+        _logger = logger;
     }
 
     public IReadOnlyList<ApplicationUser> Users { get; private set; } = [];
@@ -42,56 +50,127 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostCreateAsync(CancellationToken cancellationToken)
     {
+        Input.DisplayName = Input.DisplayName?.Trim() ?? string.Empty;
+        Input.Email = Input.Email?.Trim() ?? string.Empty;
+        Input.PhoneNumber = Input.PhoneNumber?.Trim() ?? string.Empty;
+        Input.Role = Input.Role?.Trim() ?? string.Empty;
+
         if (!ModelState.IsValid)
         {
             await LoadUsersAsync(cancellationToken);
             return Page();
         }
 
-        if (!await _roleManager.RoleExistsAsync(Input.Role))
+        ApplicationUser? createdUser = null;
+        var userCreated = false;
+        try
         {
-            ModelState.AddModelError(nameof(Input.Role), "Select a role that has been seeded.");
-            await LoadUsersAsync(cancellationToken);
-            return Page();
-        }
-
-        var user = new ApplicationUser
-        {
-            UserName = Input.Email,
-            Email = Input.Email,
-            DisplayName = Input.DisplayName,
-            PhoneNumber = Input.PhoneNumber,
-            EmailConfirmed = true,
-            IsActive = true
-        };
-        var result = await _userManager.CreateAsync(user, Input.Password);
-        if (!result.Succeeded)
-        {
-            foreach (var error in result.Errors)
+            if (!await _roleManager.RoleExistsAsync(Input.Role))
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(nameof(Input.Role), "Select a role that has been seeded.");
+                await LoadUsersAsync(cancellationToken);
+                return Page();
             }
 
-            await LoadUsersAsync(cancellationToken);
-            return Page();
-        }
-
-        var roleResult = await _userManager.AddToRoleAsync(user, Input.Role);
-        if (!roleResult.Succeeded)
-        {
-            foreach (var error in roleResult.Errors)
+            createdUser = new ApplicationUser
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                UserName = Input.Email,
+                Email = Input.Email,
+                DisplayName = Input.DisplayName,
+                PhoneNumber = Input.PhoneNumber,
+                EmailConfirmed = true,
+                IsActive = true
+            };
+
+            var result = await _userManager.CreateAsync(createdUser, Input.Password);
+            if (!result.Succeeded)
+            {
+                AddIdentityErrors(result);
+                await LoadUsersAsync(cancellationToken);
+                return Page();
             }
 
-            await LoadUsersAsync(cancellationToken);
-            return Page();
+            userCreated = true;
+            var roleResult = await _userManager.AddToRoleAsync(createdUser, Input.Role);
+            if (!roleResult.Succeeded)
+            {
+                AddIdentityErrors(roleResult);
+                var cleanupResult = await _userManager.DeleteAsync(createdUser);
+                if (!cleanupResult.Succeeded)
+                {
+                    _logger.LogError(
+                        "Could not remove newly created user {UserId} after role assignment failed: {Errors}",
+                        createdUser.Id,
+                        string.Join("; ", cleanupResult.Errors.Select(error => error.Description)));
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "The account was created but could not be assigned its role or removed automatically. Review this account before it is used.");
+                }
+
+                await LoadUsersAsync(cancellationToken);
+                return Page();
+            }
+        }
+        catch (Exception exception) when (exception is DbUpdateException or DbException)
+        {
+            if (userCreated && createdUser is not null)
+            {
+                try
+                {
+                    var cleanupResult = await _userManager.DeleteAsync(createdUser);
+                    if (!cleanupResult.Succeeded)
+                    {
+                        _logger.LogError(
+                            "Could not clean up user {UserId} after a database error: {Errors}",
+                            createdUser.Id,
+                            string.Join("; ", cleanupResult.Errors.Select(error => error.Description)));
+                    }
+                }
+                catch (Exception cleanupException) when (cleanupException is DbUpdateException or DbException)
+                {
+                    _logger.LogError(
+                        cleanupException,
+                        "Could not clean up user {UserId} after a database error.",
+                        createdUser.Id);
+                }
+            }
+
+            _logger.LogError(exception, "A database error prevented user account creation.");
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                "The account could not be created because the database is temporarily unavailable. Please try again later.");
         }
 
-        await AddAuditAsync(AdministrationAction.UserCreated, user.Id, user.Id, $"Created user with role {Input.Role}.");
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        TempData["SuccessMessage"] = $"User {Input.DisplayName} ({Input.Role}) was created successfully.";
+        await AddAuditAsync(
+            AdministrationAction.UserCreated,
+            createdUser!.Id,
+            createdUser.Id,
+            $"Created user with role {Input.Role}.");
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            TempData["SuccessMessage"] = $"Account successfully created for {Input.DisplayName} ({Input.Email}) with the {Input.Role} role.";
+        }
+        catch (Exception exception) when (exception is DbUpdateException or DbException)
+        {
+            _logger.LogError(
+                exception,
+                "User {UserId} was created with role {Role}, but its audit record could not be saved.",
+                createdUser.Id,
+                Input.Role);
+            TempData["SuccessMessage"] = $"Account successfully created for {Input.DisplayName} ({Input.Email}) with the {Input.Role} role.";
+            TempData["ErrorMessage"] = "The account was created, but its audit record could not be saved. Notify the system administrator.";
+        }
+
         return RedirectToPage("./Index");
+    }
+
+    private void AddIdentityErrors(IdentityResult result)
+    {
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
     }
 
     public async Task<IActionResult> OnPostResetPasswordAsync(string id, string newPassword, CancellationToken cancellationToken)
@@ -269,7 +348,7 @@ public class IndexModel : PageModel
         [Display(Name = "Display name")]
         public string DisplayName { get; set; } = string.Empty;
 
-        [Required, EmailAddress]
+        [Required, EmailAddress, StringLength(256)]
         public string Email { get; set; } = string.Empty;
 
         [Required, Phone]
@@ -279,7 +358,7 @@ public class IndexModel : PageModel
         [Required, MinLength(8)]
         public string Password { get; set; } = string.Empty;
 
-        [Required]
+        [Required, StringLength(50)]
         public string Role { get; set; } = ApplicationRoles.Nurse;
     }
 }

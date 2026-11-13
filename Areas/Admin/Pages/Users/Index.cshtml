@@ -11,7 +11,7 @@
 
     @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" role="status" aria-live="polite">
             @successMessage
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -34,11 +34,28 @@
     }
     <div class="card border-0 shadow-sm p-4 mb-4">
         <h2 class="h5">Create user account</h2>
-        <form method="post" asp-page-handler="Create" class="row g-3">
-            <div class="col-md-6"><label asp-for="Input.DisplayName" class="form-label"></label><input asp-for="Input.DisplayName" class="form-control" /></div>
-            <div class="col-md-6"><label asp-for="Input.Email" class="form-label"></label><input asp-for="Input.Email" class="form-control" /></div>
-            <div class="col-md-6"><label asp-for="Input.PhoneNumber" class="form-label"></label><input asp-for="Input.PhoneNumber" class="form-control" placeholder="+263..." /></div>
-            <div class="col-md-6"><label asp-for="Input.Password" class="form-label"></label><input asp-for="Input.Password" class="form-control" /></div>
+        <form method="post" asp-area="Admin" asp-page="/Users/Index" asp-page-handler="Create" class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Input.DisplayName" class="form-label"></label>
+                <input asp-for="Input.DisplayName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="+263..." autocomplete="tel" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" type="password" class="form-control" autocomplete="new-password" />
+                <div class="form-text">Use at least 8 characters, including uppercase, lowercase, and a number.</div>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
             <div class="col-md-6">
                 <label asp-for="Input.Role" class="form-label"></label>
                 <select asp-for="Input.Role" class="form-select">
@@ -48,6 +65,7 @@
                     }
                 </select>
                 <div class="form-text">The selected role determines which workspace and pages the user can open after signing in.</div>
+                <span asp-validation-for="Input.Role" class="text-danger"></span>
             </div>
             <div class="col-12"><button class="btn primary-button px-4" type="submit">Create account</button></div>
         </form>
